@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import plotly.graph_objects as go
 
 # === 2. Cached CSV Loader ===
 @st.cache_data
@@ -11,11 +12,11 @@ def load_data(file):
     return df
 
 # === 3. Team Selector ===
-available_teams = ["U15", "U16", "U17"]  # or load from folder dynamically
+available_teams = ["U15", "U16", "U17"]
 selected_team = st.selectbox("Select Team", available_teams)
 
 if selected_team:
-    filename = f"PlayerData/{selected_team}_PD_Data.csv"
+    filename = f"Player Data/{selected_team}_PD_Data.csv"
 
     if not os.path.exists(filename):
         st.error(f"File {filename} not found.")
@@ -23,8 +24,9 @@ if selected_team:
 
     df = load_data(filename)
 
-# === 4. Clean and Sort Data ===
-df = df.dropna(subset=["Date", "Session Type", "Athlete Name"])
+# === 4. Filter and Sort ===
+df = df.dropna(subset=["Date", "Session Type", "Athlete Name", "Segment Name"])
+df = df[df["Segment Name"] == "Whole Session"]
 df = df.sort_values("Date")
 
 # === 5. Define Metrics ===
@@ -34,7 +36,7 @@ metrics = ["Distance (m)", "High Intensity Running (m)", "Sprint Distance (m)",
 players = df["Athlete Name"].unique()
 st.title(f"{selected_team} Player Readiness Dashboard")
 
-# Find the most recent match date across all players
+# === 5.1 Show Latest Match Date ===
 all_match_data = df[df["Session Type"] == "Match Session"]
 if not all_match_data.empty:
     latest_overall_match_date = all_match_data["Date"].max().date()
@@ -64,27 +66,43 @@ for player in players:
     if post_match_train.empty:
         continue
 
-    st.subheader(player)
+    st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
     valid_players += 1
 
     for i, metric in enumerate(metrics):
-        match_val = latest_match.get(metric)
+        match_val = latest_match.get(metric, 0)
         train_val = post_match_train[metric].sum()
 
-        # Ensure no NaN or divide by zero
+        # Handle division by zero or NaN
         if pd.isna(match_val) or match_val == 0:
             readiness = 0
         else:
             readiness = (train_val / match_val) * 100
-            readiness = min(readiness, 200)
+            readiness = round(min(readiness, 200), 1)
 
+        gauge = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=readiness,
+            number={'suffix': "%"},
+            title={'text': metric, 'font': {'size': 12}},
+            gauge={
+                'axis': {'range': [0, 200], 'tickwidth': 1},
+                'bar': {'color': "#2ECC71"},
+                'steps': [
+                    {'range': [0, 100], 'color': "#FFDDDD"},
+                    {'range': [100, 150], 'color': "#FFE8B2"},
+                    {'range': [150, 200], 'color': "#D4EDDA"}
+                ],
+                'threshold': {
+                    'line': {'color': "red", 'width': 4},
+                    'thickness': 0.75,
+                    'value': 100
+                }
+            }
+        ))
         with cols[i]:
-            st.metric(
-                label=metric,
-                value=f"{readiness:.0f}%",
-                delta=f"{train_val:.0f}/{match_val if pd.notna(match_val) else 0:.0f}"
-            )
+            st.plotly_chart(gauge, use_container_width=True, key=f"{player}-{metric}")
 
 # === 7. If no valid players found ===
 if valid_players == 0:
