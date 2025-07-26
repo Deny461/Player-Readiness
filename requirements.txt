@@ -1,0 +1,4 @@
+code requirements.txt
+streamlit
+pandas
+plotly
