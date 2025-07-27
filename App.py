@@ -7,30 +7,20 @@ import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 
-# Custom layout for logo row (tight fit, top-left)
-st.markdown("""
-    <style>
-        .logo-row {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 10px;
-        }
-        .logo-img {
-            height: 70px;
-        }
-        .divider {
-            height: 60px;
-            border-left: 2px solid gray;
-        }
-    </style>
+# === LOGO ROW ===
+col1, col2, col3, col4 = st.columns([0.1, 0.03, 0.1, 0.77])  # Adjust spacing
 
-    <div class="logo-row">
-        <img src="BostonBoltsLogo.png" class="logo-img">
-        <div class="divider"></div>
-        <img src="MLSNextLogo.png" class="logo-img">
-    </div>
-""", unsafe_allow_html=True)
+with col1:
+    st.image("BostonBoltsLogo.png", width=80)
+
+with col2:
+    st.markdown("<div style='border-left:2px solid gray; height:60px;'></div>", unsafe_allow_html=True)
+
+with col3:
+    st.image("MLSNextLogo.png", width=80)
+
+with col4:
+    st.markdown("<h1 style='margin-bottom: 0;'>Player Readiness</h1>", unsafe_allow_html=True)
 
 # Optional: title below
 st.markdown("<h1 style='margin-top: 0;'>Player Readiness</h1>", unsafe_allow_html=True)
