@@ -187,9 +187,8 @@ for player in players:
 
     # Define training week
     training_week = training_rows[
-        (training_rows["Date"] > match_cutoff_date) &
-        (training_rows["Date"] < training_block_end)
-    ]
+    training_rows["Date"] < training_block_end
+]
 
     # Aggregate training data
     grouped_trainings = training_week.agg({
