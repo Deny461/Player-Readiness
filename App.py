@@ -166,24 +166,7 @@ for player in players:
     this_week = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"] >= start_this_week)
-    ].sort_values("Date")
-    last_week = player_data[
-        (player_data["Session Type"] == "Training Session") &
-        (player_data["Date"] >= start_last_week) &
-        (player_data["Date"] < start_this_week)
-    ].sort_values("Date")
-
-    # Dynamic flagging based on current week progress compared to the
-    # same number of sessions last week
-    session_count = len(this_week)
-    last_cumulative = last_week.head(session_count)
-
-    flag_dict = {}
-    for metric in metrics:
-        this_cum = this_week[metric].sum()
-        last_cum = last_cumulative[metric].sum()
-        flag_dict[metric] = last_cum > 0 and this_cum > 1.10 * last_cum
-        
+    ]
     last_week = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"] >= start_last_week) &
