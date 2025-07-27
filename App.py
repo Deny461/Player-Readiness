@@ -4,7 +4,7 @@ import pandas as pd
 # === CONFIG ===
 selected_team = "U15 MLS Next"  # Change if needed
 metric = "Sprint Distance (m)"  # You can swap to any metric
-player = "Lucas Mesquita"       # Set this to a real player name from your dataset
+player = "Andy Zecena"       # Set this to a real player name from your dataset
 
 # === Load and clean your CSV ===
 filename = f"Player Data/{selected_team}_PD_Data.csv"
