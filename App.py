@@ -133,7 +133,7 @@ players = sorted(df["Athlete Name"].dropna().unique())
 for player in players:
     player_data = df[df["Athlete Name"] == player].copy()
 
-    # === Clean data types ===
+    # Ensure numeric
     player_data["Duration (mins)"] = pd.to_numeric(player_data["Duration (mins)"], errors="coerce")
     for m in metrics:
         player_data[m] = pd.to_numeric(player_data[m], errors="coerce")
@@ -150,17 +150,18 @@ for player in players:
     if match_games.empty:
         continue
 
-    # === Calculate match avg per 90 ===
+    # === Compute per-90 match averages ===
+    match_games = match_games.copy()
     match_avg = {}
     for m in metrics:
         if m == "Top Speed (kph)":
             continue
-        valid_rows = match_games.dropna(subset=[m])
-        match_avg[m] = (valid_rows[m] / valid_rows["Duration (mins)"] * 90).mean()
+        match_games["Per90"] = match_games[m] / match_games["Duration (mins)"] * 90
+        match_avg[m] = match_games["Per90"].mean()
 
     top_speed_benchmark = player_data["Top Speed (kph)"].max()
 
-    # === 3 training sessions after latest match ===
+    # === Get 3 trainings after latest match ===
     trainings = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"] > match_cutoff_date)
@@ -188,8 +189,9 @@ for player in players:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-# === 11. No Valid Players Warning ===
-if valid_players == 0:
-    st.warning("No players have a match followed by training sessions.")
-    
-
+            # ✅ MATCH DEBUG OUTPUT
+            if benchmark and benchmark > 0:
+                st.markdown(
+                    f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>",
+                    unsafe_allow_html=True
+                )
