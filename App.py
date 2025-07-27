@@ -7,8 +7,8 @@ import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 
-# === LOGO ROW ===
-col1, col2, col3, col4 = st.columns([0.1, 0.03, 0.1, 0.77])  # Adjust spacing
+# === LOGO + TITLE HEADER ===
+col1, col2, col3, col4 = st.columns([0.1, 0.03, 0.1, 0.77])  # Tighter layout
 
 with col1:
     st.image("BostonBoltsLogo.png", width=80)
@@ -20,11 +20,7 @@ with col3:
     st.image("MLSNextLogo.png", width=80)
 
 with col4:
-    st.markdown("<h1 style='margin-bottom: 0;'>Player Readiness</h1>", unsafe_allow_html=True)
-
-# Optional: title below
-st.markdown("<h1 style='margin-top: 0;'>Player Readiness</h1>", unsafe_allow_html=True)
-
+    st.markdown("<h1 style='margin-bottom: 0; padding-top: 10px;'>Player Readiness</h1>", unsafe_allow_html=True)
 
 # === 2. Cached CSV Loader ===
 @st.cache_data
