@@ -12,7 +12,7 @@ def load_data(file):
     return df
 
 # === 3. Team Selector ===
-available_teams = ["U15", "U16", "U17"]
+available_teams = ["U15", "U16", "U17", "U19"]
 selected_team = st.selectbox("Select Team", available_teams)
 
 if selected_team:
@@ -72,37 +72,55 @@ for player in players:
 
     for i, metric in enumerate(metrics):
         match_val = latest_match.get(metric, 0)
-        train_val = post_match_train[metric].sum()
+    train_val = post_match_train[metric].sum()
 
-        # Handle division by zero or NaN
-        if pd.isna(match_val) or match_val == 0:
-            readiness = 0
-        else:
-            readiness = (train_val / match_val) * 100
-            readiness = round(min(readiness, 200), 1)
+    # Helper to assign color based on ratio
+def get_color(ratio):
+    if ratio < 0.5:
+        return "red"
+    elif ratio < 0.75:
+        return "orange"
+    elif ratio < 1.0:
+        return "yellow"
+    elif ratio <= 1.30:
+        return "green"
+    else:
+        return "black"
 
-        gauge = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=readiness,
-            number={'suffix': "%"},
-            title={'text': metric, 'font': {'size': 12}},
-            gauge={
-                'axis': {'range': [0, 200], 'tickwidth': 1},
-                'bar': {'color': "#2ECC71"},
-                'steps': [
-                    {'range': [0, 100], 'color': "#FFDDDD"},
-                    {'range': [100, 150], 'color': "#FFE8B2"},
-                    {'range': [150, 200], 'color': "#D4EDDA"}
-                ],
-                'threshold': {
-                    'line': {'color': "red", 'width': 4},
-                    'thickness': 0.75,
-                    'value': 100
-                }
-            }
-        ))
-        with cols[i]:
-            st.plotly_chart(gauge, use_container_width=True, key=f"{player}-{metric}")
+# Updated gauge chart generator with value and ratio display
+def create_readiness_gauge(train_val, match_val, metric_name):
+    if pd.isna(match_val) or match_val == 0:
+        ratio = 0
+    else:
+        ratio = train_val / match_val
+
+    ratio_pct = round(ratio * 100, 1)
+    bar_color = get_color(ratio)
+    axis_max = max(150, ratio_pct)
+
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=ratio_pct,
+        number={'suffix': "%", "font": {"size": 14}},
+        title={"text": f"{int(train_val)}", "font": {"size": 14}},
+        gauge={
+            "axis": {"range": [0, axis_max], "tickwidth": 1},
+            "bar": {"color": bar_color},
+            "steps": [
+                {"range": [0, 50], "color": "#ffcccc"},
+                {"range": [50, 75], "color": "#ffe0b3"},
+                {"range": [75, 100], "color": "#ffffcc"},
+                {"range": [100, 130], "color": "#ccffcc"},
+                {"range": [130, axis_max], "color": "#e6e6e6"},
+            ],
+        },
+        domain={"x": [0, 1], "y": [0, 1]}
+    ))
+    fig.update_layout(
+        margin=dict(t=10, b=10, l=10, r=10),
+        height=180,
+    )
+    return fig
 
 # === 7. If no valid players found ===
 if valid_players == 0:
