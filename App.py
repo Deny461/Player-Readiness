@@ -125,7 +125,7 @@ for player in players:
         fig = create_readiness_gauge(train_val, match_val, metric)
 
         with cols[i]:
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
 # === 7. If no valid players found ===
 if valid_players == 0:
