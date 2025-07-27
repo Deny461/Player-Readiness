@@ -162,13 +162,22 @@ for player in players:
     top_speed_benchmark = player_data["Top Speed (kph)"].max()
 
     # === Get 3 trainings after latest match ===
-    trainings = player_data[
+    training_rows = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"] > match_cutoff_date)
-    ].sort_values("Date").head(3)
+    ].copy()
 
-    if trainings.empty:
-        continue
+    # Group by date
+    grouped_trainings = (
+        training_rows.groupby("Date")[metrics]
+        .sum()
+        .reset_index()
+        .sort_values("Date")
+        .head(3)
+    )
+
+    if grouped_trainings.empty:
+        continue  # ✅ This is valid now — inside the player loop
 
     st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
@@ -176,10 +185,10 @@ for player in players:
 
     for i, metric in enumerate(metrics):
         if metric == "Top Speed (kph)":
-            train_val = trainings[metric].max()
+            train_val = grouped_trainings[metric].max()
             benchmark = top_speed_benchmark
         else:
-            train_val = trainings[metric].sum()
+            train_val = grouped_trainings[metric].sum()
             benchmark = match_avg.get(metric, None)
 
         label = metric_labels[metric]
@@ -194,9 +203,3 @@ for player in players:
                     f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>",
                     unsafe_allow_html=True
                 )
-
-            # === DEBUG BLOCK ===
-            if player == "Alex Syrett" and metric == "Distance (m)":
-                st.markdown(f"<div style='text-align: left; font-size: 14px;'><strong>DEBUG: Sessions used for Alex Syrett – Total Distance</strong></div>", unsafe_allow_html=True)
-                st.dataframe(trainings[["Date", "Session Type", metric]])
-                st.markdown(f"<div style='font-size: 14px;'>Sum of selected values: <code>{train_val:.1f}</code></div>", unsafe_allow_html=True)
