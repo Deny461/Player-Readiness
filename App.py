@@ -4,20 +4,25 @@ import pandas as pd
 import os
 import plotly.graph_objects as go
 
-# === PAGE CONFIG ===
+import streamlit as st
+
 st.set_page_config(layout="wide")
 
-# === ROW 1: Logos aligned left ===
-st.markdown("""
-<div style='display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 10px;'>
-    <img src='BostonBoltsLogo.png' width='90' height='90'>
-    <div style='width:1.5px; height:50px; background-color:gray;'></div>
-    <img src='MLSNextLogo.png' width='90' height='90'>
-</div>
-""", unsafe_allow_html=True)
+# === LOGO HEADER (Row 1) ===
+with st.container():
+    col1, col2, col3 = st.columns([0.05, 0.002, 0.05])  # Keep it tight
+    with col1:
+        st.image("BostonBoltsLogo.png", width=220)
+    with col2:
+        st.markdown("<div style='border-left:2px solid gray; height:180px;'></div>", unsafe_allow_html=True)
+    with col3:
+        st.image("MLSNextLogo.png", width=220)
 
-# === ROW 2: Centered Title ===
-st.markdown("<h1 style='text-align: center; margin-top: -20px;'>Player Readiness</h1>", unsafe_allow_html=True)
+# === TITLE SECTION (Row 2) ===
+with st.container():
+    st.markdown("""
+        <h1 style='text-align: center; font-size: 72px; margin-top: -60px;'>Player Readiness</h1>
+    """, unsafe_allow_html=True)
 
 # === 2. Cached CSV Loader ===
 @st.cache_data
