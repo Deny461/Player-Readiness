@@ -4,20 +4,38 @@ import pandas as pd
 import os
 import plotly.graph_objects as go
 
+
 st.set_page_config(layout="wide")
 
-# Centered title
-st.markdown("<h1 style='text-align: center;'>Player Readiness</h1>", unsafe_allow_html=True)
+# Custom layout for logo row (tight fit, top-left)
+st.markdown("""
+    <style>
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+        .logo-img {
+            height: 70px;
+        }
+        .divider {
+            height: 60px;
+            border-left: 2px solid gray;
+        }
+    </style>
 
-# Centered logos side by side with vertical separator
-col1, col2, col3 = st.columns([2, 1, 2])
-with col1:
-    st.image("BostonBoltsLogo.png", width=120)
-with col2:
-    st.markdown("<div style='height: 100px; border-left: 2px solid gray;'></div>", unsafe_allow_html=True)
-with col3:
-    st.image("MLSNextLogo.png", width=120)
-    
+    <div class="logo-row">
+        <img src="BostonBoltsLogo.png" class="logo-img">
+        <div class="divider"></div>
+        <img src="MLSNextLogo.png" class="logo-img">
+    </div>
+""", unsafe_allow_html=True)
+
+# Optional: title below
+st.markdown("<h1 style='margin-top: 0;'>Player Readiness</h1>", unsafe_allow_html=True)
+
+
 # === 2. Cached CSV Loader ===
 @st.cache_data
 def load_data(file):
