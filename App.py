@@ -186,44 +186,41 @@ for player in players:
     for i, metric in enumerate(metrics):
         if metric == "Top Speed (kph)":
             train_val = grouped_trainings[metric].max()
-            benchmark = top_speed_benchmark
-        else:
-            train_val = grouped_trainings[metric].sum()
-            benchmark = match_avg.get(metric, None)
+        benchmark = top_speed_benchmark
+    else:
+        train_val = grouped_trainings[metric].sum()
+        benchmark = match_avg.get(metric, None)
 
-        label = metric_labels[metric]
-        fig = create_readiness_gauge(train_val, benchmark, label)
+    label = metric_labels[metric]
+    fig = create_readiness_gauge(train_val, benchmark, label)
 
-        with cols[i]:
-            st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
-            st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
+    with cols[i]:
+        st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
+        st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-            if benchmark and benchmark > 0:
-                st.markdown(
-                    f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>",
-                    unsafe_allow_html=True
-                )
+        if benchmark and benchmark > 0:
+            st.markdown(
+                f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>",
+                unsafe_allow_html=True
+            )
 
-               # === DEBUG: Top Speed Calculation (All Players) ===
-if metric == "Top Speed (kph)":
-    st.markdown(f"<hr><h4>🛠️ Debug Info – {player} – Top Speed</h4>", unsafe_allow_html=True)
+    # 👇 Insert this inside the loop so it's executed per player+Top Speed
+    if metric == "Top Speed (kph)":
+        st.markdown(f"<hr><h4>🛠️ Debug Info – {player} – Top Speed</h4>", unsafe_allow_html=True)
 
-    # Show grouped training sessions used in Top Speed calc
-    st.markdown("**Top Speed values from the 3 most recent training sessions:**")
-    debug_top_speeds = training_rows[
-        training_rows["Date"].isin(grouped_trainings["Date"])
-    ][["Date", "Session Type", "Top Speed (kph)"]].sort_values("Date")
-    st.dataframe(debug_top_speeds, use_container_width=True)
+        st.markdown("**Top Speed values from the 3 most recent training sessions:**")
+        debug_top_speeds = training_rows[
+            training_rows["Date"].isin(grouped_trainings["Date"])
+        ][["Date", "Session Type", "Top Speed (kph)"]].sort_values("Date")
+        st.dataframe(debug_top_speeds, use_container_width=True)
 
-    # Print calculated values
-    st.markdown(f"""
-    <ul style='font-size: 16px;'>
-        <li><strong>Training Max Top Speed:</strong> {train_val:.2f} kph</li>
-        <li><strong>Benchmark (All-Time Max Top Speed):</strong> {top_speed_benchmark:.2f} kph</li>
-        <li><strong>Training / Benchmark Ratio:</strong> {train_val / top_speed_benchmark:.2f}</li>
-    </ul>
-    """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <ul style='font-size: 16px;'>
+            <li><strong>Training Max Top Speed:</strong> {train_val:.2f} kph</li>
+            <li><strong>Benchmark (All-Time Max Top Speed):</strong> {top_speed_benchmark:.2f} kph</li>
+            <li><strong>Training / Benchmark Ratio:</strong> {train_val / top_speed_benchmark:.2f}</li>
+        </ul>
+        """, unsafe_allow_html=True)
 
-    # Optional: Show full top speed history
-    st.markdown("**All recorded Top Speed values for this player:**")
-    st.dataframe(player_data[["Date", "Session Type", "Top Speed (kph)"]].sort_values("Date"), use_container_width=True)
+        st.markdown("**All recorded Top Speed values for this player:**")
+        st.dataframe(player_data[["Date", "Session Type", "Top Speed (kph)"]].sort_values("Date"), use_container_width=True)
