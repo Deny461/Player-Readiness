@@ -128,7 +128,7 @@ def create_readiness_gauge(value, benchmark, label):
 
 # === 10. Render Gauges Per Player ===
 valid_players = 0
-players = df["Athlete Name"].unique()
+players = sorted(df["Athlete Name"].dropna().unique())
 
 for player in players:
     player_data = df[df["Athlete Name"] == player]
