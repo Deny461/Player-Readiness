@@ -126,15 +126,13 @@ def create_readiness_gauge(value, benchmark, label):
     fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=180)
     return fig
 
-# === 10. Render Gauges Per Player ===
 valid_players = 0
 players = sorted(df["Athlete Name"].dropna().unique())
 
 for player in players:
-    player_data = df[df["Athlete Name"] == player]
+    player_data = df[df["Athlete Name"] == player].copy()
 
-    # Clean up types for this player's data
-    player_data = player_data.copy()
+    # Force numeric conversion
     player_data["Duration (mins)"] = pd.to_numeric(player_data["Duration (mins)"], errors="coerce")
     for m in metrics:
         player_data[m] = pd.to_numeric(player_data[m], errors="coerce")
@@ -145,25 +143,24 @@ for player in players:
 
     latest_match = matches.iloc[-1]
     match_cutoff_date = latest_match["Date"]
-    match_games = matches[matches["Date"] <= match_cutoff_date].dropna(subset=["Duration (mins)"])
+    match_games = matches[matches["Date"] <= match_cutoff_date]
+    match_games = match_games.dropna(subset=["Duration (mins)"])
+    match_games = match_games[match_games["Duration (mins)"] > 0]
 
-    if match_games.empty or (match_games["Duration (mins)"] <= 0).all():
+    if match_games.empty:
         continue
 
-    # Match average per 90 mins
+    # Compute match average per 90
     match_avg = {}
     for m in metrics:
         if m == "Top Speed (kph)":
             continue
-        valid_rows = match_games[(match_games["Duration (mins)"] > 0) & (~match_games[m].isna())]
-        if valid_rows.empty:
-            match_avg[m] = None
-        else:
-            match_avg[m] = (valid_rows[m] / valid_rows["Duration (mins)"] * 90).mean()
+        match_games_valid = match_games.dropna(subset=[m])
+        match_avg[m] = (match_games_valid[m] / match_games_valid["Duration (mins)"] * 90).mean()
 
     top_speed_benchmark = player_data["Top Speed (kph)"].max()
 
-    # Training after last match (next 3 sessions)
+    # Get 3 trainings after last match
     trainings = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"] > match_cutoff_date)
@@ -190,7 +187,11 @@ for player in players:
         with cols[i]:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
-            
+
+        # Uncomment to debug
+        # st.caption(f"{label}: Training Sum = {train_val:.1f}, Match Avg/90 = {benchmark:.1f}")
+
+
 # === 11. No Valid Players Warning ===
 if valid_players == 0:
     st.warning("No players have a match followed by training sessions.")
