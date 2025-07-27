@@ -31,9 +31,9 @@ st.markdown("<h1 style='text-align: center;'>Player Readiness</h1>", unsafe_allo
 # === Logos with Vertical Line ===
 st.markdown("""
 <div class="logo-container">
-    <img src="BostonBoltsLogo.png" width="100"/>
+    <img src="BostonBoltsLogo.png" width="500"/>
     <div class="vertical-line"></div>
-    <img src="MLSNextLogo.png" width="100"/>
+    <img src="MLSNextLogo.png" width="500"/>
 </div>
 """, unsafe_allow_html=True)
 
