@@ -167,9 +167,7 @@ for player in players:
             train_val = trainings[metric].max()
             benchmark = top_speed_benchmark
         else:
-            total = trainings[metric].sum()
-            minutes = trainings["Duration (mins)"].sum()
-            train_val = (total / minutes) * 90 if minutes > 0 else 0
+            train_val = trainings[metric].sum()
             benchmark = match_avg[metric]
 
         label = metric_labels[metric]
