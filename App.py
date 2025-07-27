@@ -189,9 +189,14 @@ for player in players:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-            # ✅ MATCH DEBUG OUTPUT
             if benchmark and benchmark > 0:
                 st.markdown(
                     f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>",
                     unsafe_allow_html=True
                 )
+
+            # === DEBUG BLOCK ===
+            if player == "Alex Syrett" and metric == "Distance (m)":
+                st.markdown(f"<div style='text-align: left; font-size: 14px;'><strong>DEBUG: Sessions used for Alex Syrett – Total Distance</strong></div>", unsafe_allow_html=True)
+                st.dataframe(trainings[["Date", "Session Type", metric]])
+                st.markdown(f"<div style='font-size: 14px;'>Sum of selected values: <code>{train_val:.1f}</code></div>", unsafe_allow_html=True)
