@@ -4,39 +4,20 @@ import pandas as pd
 import os
 import plotly.graph_objects as go
 
-# === Streamlit Config ===
 st.set_page_config(layout="wide")
 
-# === Styling for vertical line ===
-st.markdown("""
-    <style>
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 40px;
-            margin-top: 20px;
-        }
-        .vertical-line {
-            width: 2px;
-            height: 60px;
-            background-color: #888;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# === Title ===
+# Centered title
 st.markdown("<h1 style='text-align: center;'>Player Readiness</h1>", unsafe_allow_html=True)
 
-# === Logos with Vertical Line ===
-st.markdown("""
-<div class="logo-container">
-    <img src="BostonBoltsLogo.png" width="500"/>
-    <div class="vertical-line"></div>
-    <img src="MLSNextLogo.png" width="500"/>
-</div>
-""", unsafe_allow_html=True)
-
+# Centered logos side by side with vertical separator
+col1, col2, col3 = st.columns([2, 1, 2])
+with col1:
+    st.image("BostonBoltsLogo.png", width=120)
+with col2:
+    st.markdown("<div style='height: 100px; border-left: 2px solid gray;'></div>", unsafe_allow_html=True)
+with col3:
+    st.image("MLSNextLogo.png", width=120)
+    
 # === 2. Cached CSV Loader ===
 @st.cache_data
 def load_data(file):
