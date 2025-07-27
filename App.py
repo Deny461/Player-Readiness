@@ -18,11 +18,6 @@ with st.container():
     with col3:
         st.image("MLSNextLogo.png", width=220)
 
-        # === BACK BUTTON ===
-with st.container():
-    if st.button("⬅ Back", key="back_button"):
-        st.session_state.proceed = False
-        st.rerun()
 
 # === TITLE SECTION (Row 2) ===
 with st.container():
@@ -50,8 +45,16 @@ available_teams = [
 ]
 selected_team = st.selectbox("Select Team", available_teams)
 
-if st.button("Continue"):
-    st.session_state.proceed = True
+colA, colB = st.columns([1, 1])
+with colA:
+    if st.button("⬅ Back"):
+        st.session_state.proceed = False
+        st.rerun()
+
+with colB:
+    if st.button("✅ Continue"):
+        st.session_state.proceed = True
+        st.rerun()
 
 # === 5. Stop Until Proceed ===
 if not st.session_state.proceed:
