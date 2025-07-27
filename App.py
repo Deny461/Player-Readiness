@@ -47,13 +47,13 @@ selected_team = st.selectbox("Select Team", available_teams)
 
 colA, colB = st.columns([1, 1])
 with colA:
-    if st.button("⬅ Back"):
-        st.session_state.proceed = False
+    if st.button("Continue"):
+        st.session_state.proceed = True
         st.rerun()
 
 with colB:
-    if st.button("✅ Continue"):
-        st.session_state.proceed = True
+    if st.button("⬅ Back"):
+        st.session_state.proceed = False
         st.rerun()
 
 # === 5. Stop Until Proceed ===
