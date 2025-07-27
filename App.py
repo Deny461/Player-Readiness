@@ -184,23 +184,12 @@ for player in players:
     valid_players += 1
 
     for i, metric in enumerate(metrics):
-        label = metric_labels[metric]
-
-    if metric == "Top Speed (kph)":
-        # Get the highest Top Speed from the 3 grouped training dates
-        recent_dates = grouped_trainings["Date"]
-        top_speed_rows = training_rows[training_rows["Date"].isin(recent_dates)]
-
-        train_val = top_speed_rows["Top Speed (kph)"].max()
-        if pd.isna(train_val):
-            train_val = 0.0
-
-        benchmark = player_data["Top Speed (kph)"].max()
-        if pd.isna(benchmark):
-            benchmark = 0.0
-    else:
-        train_val = grouped_trainings[metric].sum()
-        benchmark = match_avg.get(metric, 0.0)
+        if metric == "Top Speed (kph)":
+            train_val = grouped_trainings[metric].max()
+            benchmark = top_speed_benchmark
+        else:
+            train_val = grouped_trainings[metric].sum()
+            benchmark = match_avg.get(metric, None)
 
         label = metric_labels[metric]
         fig = create_readiness_gauge(train_val, benchmark, label)
