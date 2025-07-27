@@ -10,7 +10,7 @@ st.set_page_config(layout="wide")
 col1, col2, col3, col4, col5 = st.columns([0.05, 0.01, 0.12, 0.05, 0.7])  # Tighter layout
 
 with col1:
-    st.image("BostonBoltsLogo.png", width=220)
+    st.image("BostonBoltsLogo.png", width=320)
 
 with col2:
     st.markdown("<div style='border-left:2px solid gray; height:80px;'></div>", unsafe_allow_html=True)
