@@ -142,6 +142,7 @@ for player in players:
         label = metric_labels[metric]
         fig = create_readiness_gauge(train_val, benchmark, label)
         with cols[i]:
+            st.markdown(f"**{label}**", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
 # === 9. Final Notice ===
