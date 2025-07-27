@@ -45,7 +45,7 @@ available_teams = [
 ]
 selected_team = st.selectbox("Select Team", available_teams)
 
-col_spacer, colA, colB, col_spacer2 = st.columns([0.0001, 0.1, 1.5, 2])  # Centered with minimal gap
+col_spacer, colA, colB, col_spacer2 = st.columns([0.0001, 0.1, 1.5, 1])  # Centered with minimal gap
 with colA:
     if st.button("Continue"):
         st.session_state.proceed = True
