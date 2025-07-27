@@ -13,7 +13,7 @@ with col1:
     st.image("BostonBoltsLogo.png", width=220)
 
 with col2:
-    st.markdown("<div style='border-left:2px solid gray; height:120px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='border-left:2px solid gray; height:180px;'></div>", unsafe_allow_html=True)
 
 with col3:
     st.image("MLSNextLogo.png", width=220)
