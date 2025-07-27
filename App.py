@@ -203,3 +203,10 @@ for player in players:
                     f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>",
                     unsafe_allow_html=True
                 )
+
+                # === DEBUG BLOCK: Top Speed ===
+if player == "Alex Syrett" and metric == "Top Speed (kph)":
+    st.markdown(f"<div style='text-align: left; font-size: 14px;'><strong>DEBUG: Sessions used for Alex Syrett – Top Speed</strong></div>", unsafe_allow_html=True)
+    st.dataframe(training_rows[training_rows["Date"].isin(grouped_trainings["Date"])][["Date", "Session Type", "Top Speed (kph)"]])
+    st.markdown(f"<div style='font-size: 14px;'>Max top speed in selected practices: <code>{train_val:.1f} kph</code></div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-size: 14px;'>Top speed benchmark (all time): <code>{benchmark:.1f} kph</code></div>", unsafe_allow_html=True)
