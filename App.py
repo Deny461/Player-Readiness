@@ -36,6 +36,7 @@ def load_data(file):
 if "proceed" not in st.session_state:
     st.session_state.proceed = False
 
+
 st.markdown("###")
 
 available_teams = [
@@ -128,13 +129,9 @@ def create_readiness_gauge(value, benchmark, label):
 # === 10. Render Gauges Per Player ===
 valid_players = 0
 players = sorted(df["Athlete Name"].dropna().unique())
-today = df["Date"].max()
-start_this_week = today - pd.Timedelta(days=today.weekday())
-start_last_week = start_this_week - pd.Timedelta(weeks=1)
 
 for player in players:
     player_data = df[df["Athlete Name"] == player]
-
     matches = player_data[player_data["Session Type"] == "Match Session"].sort_values("Date")
     if matches.empty:
         continue
@@ -142,11 +139,10 @@ for player in players:
     latest_match = matches.iloc[-1]
     match_cutoff_date = latest_match["Date"]
     match_games = matches[matches["Date"] <= match_cutoff_date]
-
     if match_games.empty:
         continue
 
-    # Match averages
+    # Match average per 90 mins
     match_avg = {
         m: (match_games[m] / match_games["Duration (mins)"] * 90).mean()
         for m in metrics if m != "Top Speed (kph)"
@@ -162,29 +158,6 @@ for player in players:
     if trainings.empty:
         continue
 
-    # Week comparison for flagging
-    this_week = player_data[
-        (player_data["Session Type"] == "Training Session") &
-            (player_data["Date"] >= start_this_week)
-    ].sort_values("Date")
-    last_week = player_data[
-        (player_data["Session Type"] == "Training Session") &
-        (player_data["Date"] >= start_last_week) &
-        (player_data["Date"] < start_this_week)
-    ].sort_values("Date")
-
-    # Dynamic flagging based on current week progress compared to the
-    # same number of sessions last week
-    session_count = len(this_week)
-    last_cumulative = last_week.head(session_count)
-
-    flag_dict = {}
-    for metric in metrics:
-        this_cum = this_week[metric].sum()
-        last_cum = last_cumulative[metric].sum()
-        flag_dict[metric] = last_cum > 0 and this_cum > 1.10 * last_cum
-
-    # Display
     st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
     valid_players += 1
@@ -194,16 +167,16 @@ for player in players:
             train_val = trainings[metric].max()
             benchmark = top_speed_benchmark
         else:
-            train_val = trainings[metric].sum()
+            total = trainings[metric].sum()
+            minutes = trainings["Duration (mins)"].sum()
+            train_val = (total / minutes) * 90 if minutes > 0 else 0
             benchmark = match_avg[metric]
 
         label = metric_labels[metric]
-        flag_icon = " ⚠️" if flag_dict.get(metric, False) else ""
         fig = create_readiness_gauge(train_val, benchmark, label)
         with cols[i]:
-            st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}{flag_icon}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
-
 
 # === 11. No Valid Players Warning ===
 if valid_players == 0:
