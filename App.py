@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import os
 import plotly.graph_objects as go
-
+from datetime import timedelta
 import streamlit as st
 
 st.set_page_config(
@@ -171,37 +171,22 @@ for player in players:
         (player_data["Date"] > match_cutoff_date)
     ].copy()
 
-    # === Get 3 trainings after latest match ===
-    training_rows = player_data[
-        (player_data["Session Type"] == "Training Session") &
-        (player_data["Date"] > match_cutoff_date)
-    ].copy()
-
-    # === Find next match date ===
-    future_matches = matches[matches["Date"] > match_cutoff_date]
-    if not future_matches.empty:
-        next_match_date = future_matches["Date"].min()
-    else:
-        next_match_date = df["Date"].max() + pd.Timedelta(days=1)
-
-    # === Filter training sessions between latest and next match ===
-    training_week = training_rows[
-        (training_rows["Date"] > match_cutoff_date) &
-        (training_rows["Date"] < next_match_date)
-    ]
-
-    # === Aggregate full training block ===
-    grouped_trainings = training_week.agg({
+    # Group by date
+    grouped_trainings = (
+    training_rows.groupby("Date").agg({
         "Distance (m)": "sum",
         "High Intensity Running (m)": "sum",
         "Sprint Distance (m)": "sum",
         "No. of Sprints": "sum",
-        "Top Speed (kph)": "max"
-    }).to_frame().T
+        "Top Speed (kph)": "max"  # ✅ key fix here!
+    })
+    .reset_index()
+    .sort_values("Date")
+    .head(3)
+)
 
-    # ✅ This line must stay inside the for-loop
     if grouped_trainings.empty:
-        continue
+        continue  # ✅ This is valid now — inside the player loop
 
     st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
