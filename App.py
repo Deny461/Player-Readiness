@@ -10,7 +10,7 @@ st.set_page_config(layout="wide")
 
 # === LOGO HEADER (Row 1) ===
 with st.container():
-    col1, col2, col3 = st.columns([0.05, 0.002, 0.05])  # Keep it tight
+    col1, col2, col3 = st.columns([0.05, 0.002, 0.4])  # Keep it tight
     with col1:
         st.image("BostonBoltsLogo.png", width=220)
     with col2:
