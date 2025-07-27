@@ -6,7 +6,11 @@ import plotly.graph_objects as go
 
 import streamlit as st
 
-st.set_page_config(layout="wide")
+st.set_page_config(
+    page_title="Player Readiness",
+    page_icon="BostonBoltsLogo.png",  # 👈 your logo here
+    layout="wide"
+)
 
 # === LOGO HEADER (Row 1) ===
 with st.container():
