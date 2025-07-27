@@ -22,7 +22,7 @@ def load_data(file):
     return df
 
 # === 3. Team Selector ===
-available_teams = ["U15", "U16", "U17", "U19"]
+available_teams = ["U15 MLS Next", "U16 MLS Next", "U17 MLS Next", "U19 MLS Next", "U15 MLS Next 2", "U16 MLS Next 2", "U17 MLS Next 2", "U19 MLS Next 2"]
 selected_team = st.selectbox("Select Team", available_teams)
 
 if selected_team:
