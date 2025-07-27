@@ -20,7 +20,7 @@ with col3:
 
 with col5:
     st.markdown("""
-        <h1 style='text-align: center; font-size: 48px; margin-top: 10px;'>Player Readiness</h1>
+        <h1 style='text-align: center; font-size: 72px; margin-top: 10px;'>Player Readiness</h1>
     """, unsafe_allow_html=True)
 
 # === 2. Cached CSV Loader ===
