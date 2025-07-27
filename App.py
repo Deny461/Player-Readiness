@@ -69,7 +69,6 @@ def create_readiness_gauge(value, benchmark, label):
         mode="gauge+number",
         value=round(ratio, 2),
         number={"font": {"size": 16}},
-        title={"text": label, "font": {"size": 16}},
         gauge={
             "axis": {"range": [0, axis_max], "tickwidth": 0, "showticklabels": False},
             "bar": {"color": bar_color},
