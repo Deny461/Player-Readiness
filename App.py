@@ -4,6 +4,14 @@ import pandas as pd
 import os
 import plotly.graph_objects as go
 
+st.markdown("""
+    <style>
+        .css-1kyxreq > div > div {
+            gap: 40px !important;  /* Adjust the number as needed */
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # === 2. Cached CSV Loader ===
 @st.cache_data
 def load_data(file):
