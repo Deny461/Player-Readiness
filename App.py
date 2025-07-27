@@ -118,9 +118,9 @@ for player in players:
 
     # Trainings after last match
     trainings = player_data[
-        (player_data["Session Type"] == "Training Session") &
-        (player_data["Date"] > match_cutoff_date)
-    ]
+    (player_data["Session Type"] == "Training Session") &
+    (player_data["Date"] > match_cutoff_date)
+].sort_values("Date").head(3)
     if trainings.empty:
         continue
 
