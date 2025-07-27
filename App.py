@@ -65,19 +65,18 @@ def create_readiness_gauge(train_val, match_val, metric_name):
         ratio = train_val / match_val
 
     bar_color = get_color(ratio)
-    axis_max = max(1.5, ratio)  # Keep it as ratio not percentage
+    axis_max = max(1.5, ratio)
 
     fig = go.Figure(go.Indicator(
-        mode="gauge+number+title",
+        mode="gauge+number",  # ✅ FIXED: removed 'title'
         value=round(ratio, 2),
-        number={"suffix": "", "font": {"size": 16}},  # Display ratio like "2.14"
-        title={"text": metric_name, "font": {"size": 16}},  # Metric at top
+        number={"suffix": "", "font": {"size": 16}},  # shows 2.14 instead of percent
+        title={"text": metric_name, "font": {"size": 16}},  # metric name at top
         gauge={
             "axis": {
                 "range": [0, axis_max],
                 "tickwidth": 0,
-                "tickcolor": "white",
-                "showticklabels": False  # removes ticks
+                "showticklabels": False
             },
             "bar": {"color": bar_color},
             "steps": [
