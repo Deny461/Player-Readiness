@@ -18,6 +18,12 @@ with st.container():
     with col3:
         st.image("MLSNextLogo.png", width=220)
 
+        # === BACK BUTTON ===
+with st.container():
+    if st.button("⬅ Back", key="back_button"):
+        st.session_state.proceed = False
+        st.rerun()
+
 # === TITLE SECTION (Row 2) ===
 with st.container():
     st.markdown("""
