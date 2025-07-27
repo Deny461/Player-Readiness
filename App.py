@@ -4,7 +4,7 @@ import pandas as pd
 # === CONFIG ===
 selected_team = "U15 MLS Next"       # Change if needed
 metric = "Distance (m)"              # This is Total Distance
-player = "Andy Zecena"               # Player you're debugging
+player = "Alex Syrett"               # Player you're debugging
 
 # === Load and clean your CSV ===
 filename = f"Player Data/{selected_team}_PD_Data.csv"
