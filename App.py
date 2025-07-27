@@ -36,7 +36,6 @@ def load_data(file):
 if "proceed" not in st.session_state:
     st.session_state.proceed = False
 
-
 st.markdown("###")
 
 available_teams = [
@@ -127,7 +126,6 @@ def create_readiness_gauge(value, benchmark, label):
     return fig
 
 # === 10. Render Gauges Per Player ===
-# === 10. Render Gauges Per Player ===
 valid_players = 0
 players = sorted(df["Athlete Name"].dropna().unique())
 today = df["Date"].max()
@@ -168,7 +166,24 @@ for player in players:
     this_week = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"] >= start_this_week)
-    ]
+    ].sort_values("Date")
+    last_week = player_data[
+        (player_data["Session Type"] == "Training Session") &
+        (player_data["Date"] >= start_last_week) &
+        (player_data["Date"] < start_this_week)
+    ].sort_values("Date")
+
+    # Dynamic flagging based on current week progress compared to the
+    # same number of sessions last week
+    session_count = len(this_week)
+    last_cumulative = last_week.head(session_count)
+
+    flag_dict = {}
+    for metric in metrics:
+        this_cum = this_week[metric].sum()
+        last_cum = last_cumulative[metric].sum()
+        flag_dict[metric] = last_cum > 0 and this_cum > 1.10 * last_cum
+        
     last_week = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"] >= start_last_week) &
