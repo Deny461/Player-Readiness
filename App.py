@@ -208,27 +208,3 @@ for player in players:
                     f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>",
                     unsafe_allow_html=True
                 )
-
-               # === DEBUG: Top Speed Calculation (All Players) ===
-if metric == "Top Speed (kph)":
-    st.markdown(f"<hr><h4>🛠️ Debug Info – {player} – Top Speed</h4>", unsafe_allow_html=True)
-
-    # Show grouped training sessions used in Top Speed calc
-    st.markdown("**Top Speed values from the 3 most recent training sessions:**")
-    debug_top_speeds = training_rows[
-        training_rows["Date"].isin(grouped_trainings["Date"])
-    ][["Date", "Session Type", "Top Speed (kph)"]].sort_values("Date")
-    st.dataframe(debug_top_speeds, use_container_width=True)
-
-    # Print calculated values
-    st.markdown(f"""
-    <ul style='font-size: 16px;'>
-        <li><strong>Training Max Top Speed:</strong> {train_val:.2f} kph</li>
-        <li><strong>Benchmark (All-Time Max Top Speed):</strong> {top_speed_benchmark:.2f} kph</li>
-        <li><strong>Training / Benchmark Ratio:</strong> {train_val / top_speed_benchmark:.2f}</li>
-    </ul>
-    """, unsafe_allow_html=True)
-
-    # Optional: Show full top speed history
-    st.markdown("**All recorded Top Speed values for this player:**")
-    st.dataframe(player_data[["Date", "Session Type", "Top Speed (kph)"]].sort_values("Date"), use_container_width=True)
