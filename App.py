@@ -39,7 +39,7 @@ df = df.sort_values("Date")
 
 # === 5. Define Metrics ===
 metrics = ["Distance (m)", "High Intensity Running (m)", "Sprint Distance (m)",
-           "No. of Sprints", "Top Speed (kph)", "Accelerations", "Decelerations"]
+           "No. of Sprints", "Top Speed (kph)"]
 
 players = df["Athlete Name"].unique()
 st.title(f"{selected_team} Player Readiness Dashboard")
