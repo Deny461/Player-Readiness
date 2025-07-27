@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 st.set_page_config(layout="wide")
 
 # === LOGO + TITLE HEADER ===
-col1, col2, col3, col4, col5 = st.columns([0.12, 0.01, 0.12, 0.05, 0.7])  # Tighter layout
+col1, col2, col3, col4, col5 = st.columns([0.05, 0.01, 0.12, 0.05, 0.7])  # Tighter layout
 
 with col1:
     st.image("BostonBoltsLogo.png", width=120)
