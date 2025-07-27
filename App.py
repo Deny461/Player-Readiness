@@ -64,27 +64,30 @@ def create_readiness_gauge(train_val, match_val, metric_name):
     else:
         ratio = train_val / match_val
 
-    ratio_pct = round(ratio * 100, 1)
     bar_color = get_color(ratio)
-    axis_max = max(150, ratio_pct, 130)
+    axis_max = max(1.5, ratio)  # Keep it as ratio not percentage
 
     fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=ratio_pct,
-        number={'suffix': "%", "font": {"size": 14}},
-        title={"text": f"{int(train_val)}", "font": {"size": 14}},
+        mode="gauge+number+title",
+        value=round(ratio, 2),
+        number={"suffix": "", "font": {"size": 16}},  # Display ratio like "2.14"
+        title={"text": metric_name, "font": {"size": 16}},  # Metric at top
         gauge={
-            "axis": {"range": [0, axis_max], "tickwidth": 1},
+            "axis": {
+                "range": [0, axis_max],
+                "tickwidth": 0,
+                "tickcolor": "white",
+                "showticklabels": False  # removes ticks
+            },
             "bar": {"color": bar_color},
             "steps": [
-                {"range": [0, 50], "color": "#ffcccc"},
-                {"range": [50, 75], "color": "#ffe0b3"},
-                {"range": [75, 100], "color": "#ffffcc"},
-                {"range": [100, 130], "color": "#ccffcc"},
-                {"range": [130, axis_max], "color": "#e6e6e6"},
-            ],
-        },
-        domain={"x": [0, 1], "y": [0, 1]}
+                {"range": [0, 0.5], "color": "#ffcccc"},
+                {"range": [0.5, 0.75], "color": "#ffe0b3"},
+                {"range": [0.75, 1.0], "color": "#ffffcc"},
+                {"range": [1.0, 1.3], "color": "#ccffcc"},
+                {"range": [1.3, axis_max], "color": "#e6e6e6"},
+            ]
+        }
     ))
     fig.update_layout(
         margin=dict(t=10, b=10, l=10, r=10),
