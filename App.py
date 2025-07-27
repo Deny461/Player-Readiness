@@ -165,18 +165,24 @@ for player in players:
     # Week comparison for flagging
     this_week = player_data[
         (player_data["Session Type"] == "Training Session") &
-        (player_data["Date"] >= start_this_week)
-    ]
+            (player_data["Date"] >= start_this_week)
+    ].sort_values("Date")
     last_week = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"] >= start_last_week) &
         (player_data["Date"] < start_this_week)
-    ]
+    ].sort_values("Date")
+
+    # Dynamic flagging based on current week progress compared to the
+    # same number of sessions last week
+    session_count = len(this_week)
+    last_cumulative = last_week.head(session_count)
+
     flag_dict = {}
     for metric in metrics:
-        this_sum = this_week[metric].sum()
-        last_sum = last_week[metric].sum()
-        flag_dict[metric] = last_sum > 0 and this_sum > 1.10 * last_sum
+        this_cum = this_week[metric].sum()
+        last_cum = last_cumulative[metric].sum()
+        flag_dict[metric] = last_cum > 0 and this_cum > 1.10 * last_cum
 
     # Display
     st.markdown(f"### {player}")
@@ -188,9 +194,7 @@ for player in players:
             train_val = trainings[metric].max()
             benchmark = top_speed_benchmark
         else:
-            total = trainings[metric].sum()
-            minutes = trainings["Duration (mins)"].sum()
-            train_val = (total / minutes) * 90 if minutes > 0 else 0
+            train_val = trainings[metric].sum()
             benchmark = match_avg[metric]
 
         label = metric_labels[metric]
