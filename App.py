@@ -169,12 +169,17 @@ for player in players:
 
     # Group by date
     grouped_trainings = (
-        training_rows.groupby("Date")[metrics]
-        .sum()
-        .reset_index()
-        .sort_values("Date")
-        .head(3)
-    )
+    training_rows.groupby("Date").agg({
+        "Distance (m)": "sum",
+        "High Intensity Running (m)": "sum",
+        "Sprint Distance (m)": "sum",
+        "No. of Sprints": "sum",
+        "Top Speed (kph)": "max"  # ✅ key fix here!
+    })
+    .reset_index()
+    .sort_values("Date")
+    .head(3)
+)
 
     if grouped_trainings.empty:
         continue  # ✅ This is valid now — inside the player loop
