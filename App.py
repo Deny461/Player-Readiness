@@ -141,7 +141,8 @@ for player in players:
         match_val = latest_match.get(metric, 0)
         train_val = post_match_train[metric].sum()
 
-        fig = create_readiness_gauge(train_val, match_val, metric)
+        label = metric_labels.get(metric, metric)
+        fig = create_readiness_gauge(train_val, match_val, label)
 
         with cols[i]:
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
