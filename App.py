@@ -21,9 +21,19 @@ def load_data(file):
     df['Date'] = pd.to_datetime(df['Start Date'], errors='coerce')
     return df
 
-# === 3. Team Selector ===
+# === 3. Landing Page UI ===
+col1, col2 = st.columns([1, 1])
+with col1:
+    st.image("BostonBoltsLogo.png", width=200)
+with col2:
+    st.image("MLSNextLogo.png", width=200)
+
+
 available_teams = ["U15 MLS Next", "U16 MLS Next", "U17 MLS Next", "U19 MLS Next", "U15 MLS Next 2", "U16 MLS Next 2", "U17 MLS Next 2", "U19 MLS Next 2"]
 selected_team = st.selectbox("Select Team", available_teams)
+
+if not selected_team:
+    st.stop()  # Don't show charts unless a team is selected
 
 if selected_team:
     filename = f"Player Data/{selected_team}_PD_Data.csv"
@@ -32,10 +42,24 @@ if selected_team:
         st.stop()
     df = load_data(filename)
 
-# === 4. Clean and Sort ===
+# === 4. Load and clean data after team is selected ===
+filename = f"Player Data/{selected_team}_PD_Data.csv"
+if not os.path.exists(filename):
+    st.error(f"File {filename} not found.")
+    st.stop()
+
+df = load_data(filename)
 df = df.dropna(subset=["Date", "Session Type", "Athlete Name", "Segment Name"])
 df = df[df["Segment Name"] == "Whole Session"]
 df = df.sort_values("Date")
+
+# === 4.1 Show Latest Match Date ===
+match_df = df[df["Session Type"] == "Match Session"]
+if not match_df.empty:
+    latest_match_date = match_df["Date"].max().date()
+    st.markdown(f"**Latest Match Date Used:** `{latest_match_date}`")
+else:
+    st.markdown("**Latest Match Date Used:** _None found in dataset_")
 
 # === 5. Metrics & Labels ===
 metrics = ["Distance (m)", "High Intensity Running (m)", "Sprint Distance (m)", "No. of Sprints", "Top Speed (kph)"]
@@ -83,14 +107,6 @@ def create_readiness_gauge(value, benchmark, label):
     ))
     fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=180)
     return fig
-
-# === 7. Show Match Date ===
-match_df = df[df["Session Type"] == "Match Session"]
-if not match_df.empty:
-    latest_match_date = match_df["Date"].max().date()
-    st.markdown(f"**Latest Match Date Used:** `{latest_match_date}`")
-else:
-    st.markdown("**Latest Match Date Used:** _None found in dataset_")
 
 # === 8. Per Player ===
 valid_players = 0
