@@ -192,13 +192,4 @@ for player in players:
 if valid_players == 0:
     st.warning("No players have a match followed by training sessions.")
     
-with cols[i]:
-    st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
-    st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
-    
-    # 👇 Show the raw numbers under the gauge
-    if benchmark and benchmark > 0:
-        st.markdown(
-            f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>",
-            unsafe_allow_html=True
-        )
+
