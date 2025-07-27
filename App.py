@@ -120,19 +120,15 @@ for player in players:
     cols = st.columns(len(metrics))
     valid_players += 1
 
-    # Create a column layout with spacer columns between gauges
-cols = st.columns(len(metrics) * 2 - 1)  # e.g. 13 columns for 7 gauges (6 spacers)
 
-for i, metric in enumerate(metrics):
-    match_val = latest_match.get(metric, 0)
-    train_val = post_match_train[metric].sum()
+    for i, metric in enumerate(metrics):
+        match_val = latest_match.get(metric, 0)
+        train_val = post_match_train[metric].sum()
 
-    fig = create_readiness_gauge(train_val, match_val, metric)
+        fig = create_readiness_gauge(train_val, match_val, metric)
 
-    # Gauge goes in even-indexed columns: 0, 2, 4,...
-    col_index = i * 2
-    with cols[col_index]:
-        st.plotly_chart(fig, use_container_width=True)
+        with cols[i]:
+            st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
 # === 7. If no valid players found ===
 if valid_players == 0:
