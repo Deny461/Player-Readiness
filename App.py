@@ -144,6 +144,7 @@ for player in players:
         with cols[i]:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
+            title={"text": "", "font": {"size": 16}},  # <- blank out title
 
 # === 9. Final Notice ===
 if valid_players == 0:
