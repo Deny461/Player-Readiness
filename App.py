@@ -38,8 +38,16 @@ df = df[df["Segment Name"] == "Whole Session"]
 df = df.sort_values("Date")
 
 # === 5. Define Metrics ===
-metrics = ["Distance (m)", "High Intensity Running (m)", "Sprint Distance (m)",
+metrics = ["Distance (m)", "High Intensity Running (m)", "Sprint Distance (m)", 
            "No. of Sprints", "Top Speed (kph)"]
+
+metric_labels = {
+    "Distance (m)": "Total Distance",
+    "High Intensity Running (m)": "HSR",
+    "Sprint Distance (m)": "Sprint Distance",
+    "No. of Sprints": "# of Sprints",
+    "Top Speed (kph)": "Top Speed"
+}
 
 players = df["Athlete Name"].unique()
 st.title(f"{selected_team} Player Readiness Dashboard")
