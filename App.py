@@ -243,73 +243,65 @@ for player in players:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-            # === Flagging === (skip for Top Speed and skip if dummy data)
-if metric != "Top Speed (kph)" and training_week["Duration (mins)"].sum() > 0:
-    flag = ""
-    training_week_sorted = training_week.sort_values("Date").copy()
-    practices_done = training_week_sorted.shape[0]
-    current_sum = training_week[metric].sum()
+            # === Flagging === (skip for Top Speed)
+            if metric != "Top Speed (kph)":
+                flag = ""
+                training_week_sorted = training_week.sort_values("Date").copy()
+                practices_done = training_week_sorted.shape[0]
+                current_sum = training_week[metric].sum()
 
-    # Previous Week
-    latest_year, latest_week, _ = latest_training_date.isocalendar()
-    if latest_week == 1:
-        prev_week, prev_year = 52, latest_year - 1
-    else:
-        prev_week, prev_year = latest_week - 1, latest_year
+                # Previous Week
+                latest_year, latest_week, _ = latest_training_date.isocalendar()
+                if latest_week == 1:
+                    prev_week, prev_year = 52, latest_year - 1
+                else:
+                    prev_week, prev_year = latest_week - 1, latest_year
 
-    iso_dates = player_data["Date"].dt.isocalendar()
-    previous_week_data = player_data[
-        (player_data["Session Type"] == "Training Session") &
-        (iso_dates["week"] == prev_week) &
-        (iso_dates["year"] == prev_year)
-    ]
-    previous_week_total = previous_week_data[metric].sum()
+                iso_dates = player_data["Date"].dt.isocalendar()
+                previous_week_data = player_data[
+                    (player_data["Session Type"] == "Training Session") &
+                    (iso_dates["week"] == prev_week) &
+                    (iso_dates["year"] == prev_year)
+                ]
+                previous_week_total = previous_week_data[metric].sum()
 
-    # Historical Averages
-    practice_avgs = (
-        player_data[player_data["Session Type"] == "Training Session"]
-        .groupby("PracticeNumber")[metric].mean()
-        .reindex([1, 2, 3], fill_value=0)
-    )
+                # Historical Averages
+                practice_avgs = (
+                    player_data[player_data["Session Type"] == "Training Session"]
+                    .groupby("PracticeNumber")[metric].mean()
+                    .reindex([1, 2, 3], fill_value=0)
+                )
 
-    if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
-        flag = "⚠️"
-        flag_val = current_sum
-        projection_used = False
-        projected_total = "N/A"
-    else:
-        if practices_done < 3:
-            needed_practices = [p for p in range(practices_done + 1, 4)]
-            projected_total = current_sum + practice_avgs.loc[needed_practices].sum()
-            flag_val = projected_total
-            projection_used = True
-        else:
-            projected_total = "N/A"
-            flag_val = current_sum
-            projection_used = False
+                if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
+                    flag = "⚠️"
+                    flag_val = current_sum
+                    projection_used = False
+                    projected_total = "N/A"
+                else:
+                    if practices_done < 3:
+                        needed_practices = [p for p in range(practices_done + 1, 4)]
+                        projected_total = current_sum + practice_avgs.loc[needed_practices].sum()
+                        flag_val = projected_total
+                        projection_used = True
+                    else:
+                        projected_total = "N/A"
+                        flag_val = current_sum
+                        projection_used = False
 
-        if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
-            flag = "🔮⚠️" if projection_used else "⚠️"
+                    if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
+                        flag = "🔮⚠️" if projection_used else "⚠️"
 
-    # Debug Info
-    st.markdown(f"""
-    <div style='font-size:14px; color:#555;'>
-        <b>Debug for {label}</b><br>
-        • Previous Week Total: {previous_week_total:.1f}<br>
-        • Current Week So Far: {current_sum:.1f}<br>
-        • Practices Done: {practices_done}<br>
-        • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
-        • Projected Total: {projected_total if projection_used else 'N/A'}<br>
-        • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
-        • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
-        • ⚠️ Flag: {'YES' if flag else 'NO'}
-    </div>
-    """, unsafe_allow_html=True)
-
-else:
-    # For players with no training this global week → show 0s, no flags
-    st.markdown(f"""
-    <div style='font-size:14px; color:#777;'>
-        No training for {label} this week → gauges set to 0, no flagging applied.
-    </div>
-    """, unsafe_allow_html=True)
+                # Debug Info
+                st.markdown(f"""
+                <div style='font-size:14px; color:#555;'>
+                    <b>Debug for {label}</b><br>
+                    • Previous Week Total: {previous_week_total:.1f}<br>
+                    • Current Week So Far: {current_sum:.1f}<br>
+                    • Practices Done: {practices_done}<br>
+                    • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
+                    • Projected Total: {projected_total if projection_used else 'N/A'}<br>
+                    • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
+                    • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
+                    • ⚠️ Flag: {'YES' if flag else 'NO'}
+                </div>
+                """, unsafe_allow_html=True)
