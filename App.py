@@ -4,7 +4,6 @@ import pandas as pd
 import os
 import plotly.graph_objects as go
 from datetime import timedelta
-import streamlit as st
 
 st.set_page_config(
     page_title="Player Readiness",
@@ -213,66 +212,52 @@ for player in players:
                 ].groupby("Weekday")[metric].mean()
 
                 current_weekdays = training_week["Date"].dt.day_name().tolist()
-                current_day = latest_training_date.day_name()
                 current_sum = training_week[metric].sum()
                 thursday_done = "Thursday" in current_weekdays
 
-                if not thursday_done:
-                    projected_total = sum([weekday_avgs.get(day, 0) for day in ["Tuesday", "Wednesday", "Thursday"]])
-                    flag_val = projected_total
+                # === Get Previous Week Data ===
+                latest_year, latest_week, _ = latest_training_date.isocalendar()
+                if latest_week == 1:
+                    prev_week, prev_year = 52, latest_year - 1
                 else:
-                    flag_val = current_sum
+                    prev_week, prev_year = latest_week - 1, latest_year
 
-                                    # === Determine Previous Week for Comparison ===
-                    latest_year, latest_week, _ = latest_training_date.isocalendar()
-                    if latest_week == 1:
-                        prev_week = 52
-                        prev_year = latest_year - 1
-                    else:
-                        prev_week = latest_week - 1
-                        prev_year = latest_year
-
-                    # === Get Previous Week Data ===
-                    iso_dates = player_data["Date"].dt.isocalendar()
-                    previous_week_data = player_data[
+                iso_dates = player_data["Date"].dt.isocalendar()
+                previous_week_data = player_data[
                     (player_data["Session Type"] == "Training Session") &
                     (iso_dates["week"] == prev_week) &
                     (iso_dates["year"] == prev_year)
-]
+                ]
+                previous_week_total = previous_week_data[metric].sum()
 
-                    previous_week_total = previous_week_data[metric].sum()
-
-                    # === Compare to Current Week Actual (Not Projected Yet) ===
-                    if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
-                        flag = "⚠️"
+                if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
+                    flag = "⚠️"
+                    flag_val = current_sum
+                    projection_used = False
+                else:
+                    if not thursday_done:
+                        estimated_thursday = weekday_avgs.get("Thursday", 0)
+                        projected_total = current_sum + estimated_thursday
+                        flag_val = projected_total
+                        projection_used = True
+                    else:
                         flag_val = current_sum
                         projection_used = False
+
+                    if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
+                        flag = "🔮⚠️" if projection_used else "⚠️"
                     else:
-                        if not thursday_done:
-                            projected_total = sum([weekday_avgs.get(day, 0) for day in ["Tuesday", "Wednesday", "Thursday"]])
-                            flag_val = projected_total
-                            projection_used = True
-                        else:
-                            flag_val = current_sum
-                            projection_used = False
+                        flag = ""
 
-                        # Apply flag only if projection or actual goes over threshold
-                        if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
-                            flag = "🔮⚠️" if projection_used else "⚠️"
-                        else:
-                            flag = ""
-
-                try:
-                    st.markdown(f"""
-                    <div style='font-size:14px; color:#555;'>
-                        <b>Debug for {label}</b><br>
-                        • Previous Week Total: {previous_week_total:.1f}<br>
-                        • Current Sum: {current_sum:.1f}<br>
-                        • Projected Total: {projected_total if not thursday_done else 'N/A'}<br>
-                        • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
-                        • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
-                        • ⚠️ Flag: {'YES' if flag else 'NO'}
-                    </div>
-                    """, unsafe_allow_html=True)
-                except Exception as e:
-                    st.markdown(f"<div style='color:red;'>Debug Error: {e}</div>", unsafe_allow_html=True)
+                # === Debug Info ===
+                st.markdown(f"""
+                <div style='font-size:14px; color:#555;'>
+                    <b>Debug for {label}</b><br>
+                    • Previous Week Total: {previous_week_total:.1f}<br>
+                    • Current Week So Far: {current_sum:.1f}<br>
+                    • Historical Thursday Avg: {weekday_avgs.get("Thursday", 0):.1f}<br>
+                    • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
+                    • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
+                    • ⚠️ Flag: {'YES' if flag else 'NO'}
+                </div>
+                """, unsafe_allow_html=True)
