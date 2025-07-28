@@ -171,7 +171,7 @@ for player in players:
 
     # If this player has no training in the global week → inject a 0 row
     if training_week.empty:
-        training_week = pd.DataFrame([{
+            training_week = pd.DataFrame([{
             "Athlete Name": player,
             "Date": latest_training_date,
             "Session Type": "Training Session",
