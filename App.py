@@ -261,19 +261,27 @@ with cols[i]:
 
     flag = ""
     # (flag calculation code)
+if metric != "Top Speed (kph)":
+    try:
+        previous = f"{previous_week_total:.1f}" if 'previous_week_total' in locals() else "N/A"
+        current = f"{current_sum:.1f}" if 'current_sum' in locals() else "N/A"
+        projected = f"{projected_total:.1f}" if 'projected_total' in locals() else "N/A"
+        value_used = f"{flag_val:.1f}" if 'flag_val' in locals() else "N/A"
+        threshold = f"{(1.10 * previous_week_total):.1f}" if 'previous_week_total' in locals() else "N/A"
+        flag_text = "YES" if flag else "NO"
 
-    if metric != "Top Speed (kph)":
         debug_lines = [
-        f"<b>📊 Flag Debug for {label}:</b>",
-        f"• Previous Week Total: {previous_week_total:.1f}",
-        f"• Current Week Total: {current_sum:.1f}",
-        f"• Projected Week Total: {projected_total:.1f}" if not thursday_done else f"• Thursday already done",
-        f"• Value Used: {'Actual' if thursday_done else 'Projected'} = {flag_val:.1f}",
-        f"• Threshold (110%): {(1.10 * previous_week_total):.1f}",
-        f"• ⚠️ Flag: {'YES' if flag else 'NO'}"
-    ]
-    st.markdown(
-        "<div style='font-size:13px; color:#444; margin-bottom:12px;'>" + "<br>".join(debug_lines) + "</div>",
-        unsafe_allow_html=True
-    )
-    
+            f"<b>📊 Flag Debug for {label}:</b>",
+            f"• Previous Week Total: {previous}",
+            f"• Current Week Total: {current}",
+            f"• Projected Week Total: {projected}" if not thursday_done else f"• Thursday already done",
+            f"• Value Used: {'Actual' if thursday_done else 'Projected'} = {value_used}",
+            f"• Threshold (110%): {threshold}",
+            f"• ⚠️ Flag: {flag_text}"
+        ]
+        st.markdown(
+            "<div style='font-size:13px; color:#444; margin-bottom:12px;'>" + "<br>".join(debug_lines) + "</div>",
+            unsafe_allow_html=True
+        )
+    except Exception as e:
+        st.markdown(f"<div style='color:red;'>Debug Error: {e}</div>", unsafe_allow_html=True)
