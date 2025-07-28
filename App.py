@@ -241,14 +241,41 @@ for player in players:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-            flag_text = ""
-            if metric != "Top Speed (kph)":
-                projected = projected_load[metric]
-                baseline = historical_weekly_load[metric]
-                if pd.notna(projected) and pd.notna(baseline) and projected > baseline * 1.10:
-                    flag_text = f"<div style='text-align: center; font-size: 16px; color: red;'>⚠️ Projected {projected:.1f} > {baseline:.1f} (+10%)</div>"
+            # === ⚠️ Weekly Load Flag Logic ===
+flag = ""
+if metric != "Top Speed (kph)" and benchmark and benchmark > 0:
+    # Calculate historical averages per weekday
+    weekday_avgs = player_data[
+        (player_data["Session Type"] == "Training Session")
+    ].groupby(player_data["Date"].dt.day_name())[metric].mean()
 
-            st.markdown(
-                f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>{flag_text}",
-                unsafe_allow_html=True
-            )
+    current_weekdays = training_week["Date"].dt.day_name().tolist()
+    current_day = latest_training_date.day_name()
+
+    # Sum of current week's values
+    current_sum = training_week[metric].sum()
+
+    # Determine if Thursday is completed
+    thursday_done = "Thursday" in current_weekdays
+
+    # Projected total only if Thursday not done
+    if not thursday_done:
+        days_so_far = len(current_weekdays)
+        projected_total = 0
+        for day in ["Tuesday", "Wednesday", "Thursday"]:
+            projected_total += weekday_avgs.get(day, 0)
+        flag_val = projected_total
+    else:
+        flag_val = current_sum
+
+    weekly_avg = player_data[
+        (player_data["Session Type"] == "Training Session")
+    ].groupby(player_data["Date"].dt.isocalendar().week)[metric].sum().mean()
+
+    if weekly_avg > 0 and flag_val > 1.10 * weekly_avg:
+        flag = "⚠️" if thursday_done else "🔮⚠️"
+        
+        st.markdown(
+    f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f} {flag}</div>",
+    unsafe_allow_html=True
+)
