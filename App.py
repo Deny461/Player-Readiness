@@ -255,3 +255,12 @@ if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
                     unsafe_allow_html=True
                 )
 
+                debug_lines = [
+            f"<b>📊 Flag Debug for {label}:</b>",
+            f"• Previous Week Total: {previous_week_total:.1f}",
+            f"• Current Week Total: {current_sum:.1f}",
+            f"• Projected Week Total: {projected_total:.1f}",
+            f"• Value Used: {'Actual' if thursday_done else 'Projected'} = {flag_val:.1f}",
+            f"• Threshold (110%): {(1.10 * previous_week_total):.1f}",
+        f"• ⚠️ Flag: {'YES' if flag else 'NO'}"
+]
