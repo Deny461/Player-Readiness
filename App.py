@@ -40,7 +40,6 @@ def load_data(file):
 if "proceed" not in st.session_state:
     st.session_state.proceed = False
 
-
 st.markdown("###")
 
 available_teams = [
@@ -134,27 +133,23 @@ def create_readiness_gauge(value, benchmark, label):
 valid_players = 0
 players = sorted(df["Athlete Name"].dropna().unique())
 
-# 🔁 Get latest training week globally (not per player)
-latest_training_date = df[df["Session Type"] == "Training Session"]["Date"].max()
+# 🔁 Use same training week for all players
+global_training_df = df[df["Session Type"] == "Training Session"]
+latest_training_date = global_training_df["Date"].max()
 if pd.isna(latest_training_date):
     st.warning("No training sessions found in dataset.")
     st.stop()
 
 iso_year, iso_week, _ = latest_training_date.isocalendar()
-
-# Prepare training and match filters globally
 week_start = latest_training_date - timedelta(days=latest_training_date.weekday())
 match_cutoff_date = week_start - timedelta(days=1)
 
 for player in players:
     player_data = df[df["Athlete Name"] == player].copy()
-
-    # Ensure numeric
     player_data["Duration (mins)"] = pd.to_numeric(player_data["Duration (mins)"], errors="coerce")
     for m in metrics:
         player_data[m] = pd.to_numeric(player_data[m], errors="coerce")
 
-    # Matches before this ISO week (to avoid overlap)
     matches = player_data[
         (player_data["Session Type"] == "Match Session") &
         (player_data["Date"] <= match_cutoff_date) &
@@ -164,7 +159,6 @@ for player in players:
     if matches.empty:
         continue
 
-    # Training only from that global ISO week
     training_week = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"].apply(lambda d: d.isocalendar()[:2] == (iso_year, iso_week)))
@@ -173,7 +167,6 @@ for player in players:
     if training_week.empty:
         continue
 
-    # === Compute per-90 match averages ===
     match_avg = {}
     for m in metrics:
         if m == "Top Speed (kph)":
@@ -183,7 +176,6 @@ for player in players:
 
     top_speed_benchmark = player_data["Top Speed (kph)"].max()
 
-    # === Group Training Stats ===
     grouped_trainings = training_week.agg({
         "Distance (m)": "sum",
         "High Intensity Running (m)": "sum",
@@ -195,7 +187,6 @@ for player in players:
     if grouped_trainings.empty:
         continue
 
-    # === DEBUG BLOCK ===
     st.markdown(f"<hr><h4>🧪 Debug Info – {player}</h4>", unsafe_allow_html=True)
     st.markdown(f"""
     <ul style='font-size:16px;'>
@@ -209,7 +200,6 @@ for player in players:
     preview_cols = ["Date", "Session Type"] + metrics
     st.dataframe(training_week[preview_cols].sort_values("Date"), use_container_width=True)
 
-    # === Render Gauges ===
     st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
     valid_players += 1
