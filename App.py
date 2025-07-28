@@ -131,6 +131,7 @@ def create_readiness_gauge(value, benchmark, label):
     return fig
 
 # === 10. Render Gauges Per Player ===
+# === 10. Render Gauges Per Player ===
 valid_players = 0
 players = sorted(df["Athlete Name"].dropna().unique())
 
@@ -146,25 +147,9 @@ for player in players:
     if matches.empty:
         continue
 
-    # Get latest training date and ISO week
-    latest_training = player_data[player_data["Session Type"] == "Training Session"]["Date"].max()
-    if pd.isna(latest_training):
-        continue
-
-    iso_year, iso_week, _ = latest_training.isocalendar()
-
-    # Only grab training sessions from same ISO week
-    training_week = player_data[
-        (player_data["Session Type"] == "Training Session") &
-        (player_data["Date"].apply(lambda d: d.isocalendar()[:2] == (iso_year, iso_week)))
-    ]
-
-    if training_week.empty:
-        continue
-
-    # Match cutoff: before current ISO week
-    week_start = latest_training - timedelta(days=latest_training.weekday())
-    match_cutoff_date = week_start - timedelta(days=1)
+    latest_training = player_data[player_data["Session Type"] == "Training Session"].sort_values("Date").iloc[-1]
+    training_block_end = latest_training["Date"]
+    match_cutoff_date = training_block_end - timedelta(days=6)
     match_games = matches[matches["Date"] <= match_cutoff_date]
     match_games = match_games[match_games["Duration (mins)"] > 0]
 
@@ -172,17 +157,38 @@ for player in players:
         continue
 
     # === Compute per-90 match averages ===
+    match_games = match_games.copy()
     match_avg = {}
     for m in metrics:
         if m == "Top Speed (kph)":
             continue
         match_games["Per90"] = match_games[m] / match_games["Duration (mins)"] * 90
         match_avg[m] = match_games["Per90"].mean()
-
     top_speed_benchmark = player_data["Top Speed (kph)"].max()
-    training_block_end = latest_training  # Just reuse this for debug output
 
-    # === Group Weekly Training Stats ===
+    # === Get training sessions after latest match ===
+    training_rows = player_data[
+        (player_data["Session Type"] == "Training Session") &
+        (player_data["Date"] > match_cutoff_date)
+    ].copy()
+
+    future_matches = matches[matches["Date"] > match_cutoff_date]
+
+    # === Define training window ===
+    default_block_end = match_cutoff_date + timedelta(days=6)
+    midweek_match = future_matches[future_matches["Date"] <= default_block_end]
+    training_block_end = (
+        midweek_match["Date"].min() if not midweek_match.empty else default_block_end
+    )
+
+    training_week = training_rows[
+        (training_rows["Date"] > match_cutoff_date) &
+        (training_rows["Date"] <= training_block_end)
+    ]
+
+    if training_week.empty:
+        continue
+
     grouped_trainings = training_week.agg({
         "Distance (m)": "sum",
         "High Intensity Running (m)": "sum",
@@ -204,9 +210,15 @@ for player in players:
     </ul>
     """, unsafe_allow_html=True)
 
-    st.markdown("**📋 Training Week Data Preview:**")
-    preview_cols = ["Date", "Session Type"] + metrics
-    st.dataframe(training_week[preview_cols].sort_values("Date"), use_container_width=True)
+    for m in metrics:
+        training_week[m] = pd.to_numeric(training_week[m], errors="coerce")
+
+    if not training_week.empty:
+        st.markdown("**📋 Training Week Data Preview:**")
+        preview_cols = ["Date", "Session Type"] + metrics
+        st.dataframe(training_week[preview_cols].sort_values("Date"), use_container_width=True)
+    else:
+        st.warning("⚠️ No training sessions found in the window.")
 
     # === Render Gauges ===
     st.markdown(f"### {player}")
