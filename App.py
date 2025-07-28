@@ -131,6 +131,7 @@ def create_readiness_gauge(value, benchmark, label):
     return fig
 
 # === 10. Render Gauges Per Player ===
+# === 10. Render Gauges Per Player ===
 valid_players = 0
 players = sorted(df["Athlete Name"].dropna().unique())
 
@@ -162,7 +163,6 @@ for player in players:
             continue
         match_games["Per90"] = match_games[m] / match_games["Duration (mins)"] * 90
         match_avg[m] = match_games["Per90"].mean()
-
     top_speed_benchmark = player_data["Top Speed (kph)"].max()
 
     # === Get training sessions after latest match ===
@@ -171,27 +171,23 @@ for player in players:
         (player_data["Date"] > match_cutoff_date)
     ].copy()
 
-    # === Get the future match after this one ===
     future_matches = matches[matches["Date"] > match_cutoff_date]
 
-    # Define end of calendar week (Sunday)
-    week_end_date = match_cutoff_date + timedelta(days=(6 - match_cutoff_date.weekday()))
+    # === Define training window ===
+    default_block_end = match_cutoff_date + timedelta(days=6)
+    midweek_match = future_matches[future_matches["Date"] <= default_block_end]
+    training_block_end = (
+        midweek_match["Date"].min() if not midweek_match.empty else default_block_end
+    )
 
-    # Check if next match happens before the week ends
-    midweek_match = future_matches[future_matches["Date"] <= week_end_date]
-
-    if not midweek_match.empty:
-        training_block_end = midweek_match["Date"].min()  # midweek reset
-    else:
-        training_block_end = week_end_date  # standard reset on Sunday
-
-    # Define training week
     training_week = training_rows[
-    (training_rows["Date"] > match_cutoff_date) &
-    (training_rows["Date"] <= training_block_end)
-]
+        (training_rows["Date"] > match_cutoff_date) &
+        (training_rows["Date"] <= training_block_end)
+    ]
 
-    # Aggregate training data
+    if training_week.empty:
+        continue
+
     grouped_trainings = training_week.agg({
         "Distance (m)": "sum",
         "High Intensity Running (m)": "sum",
@@ -199,17 +195,12 @@ for player in players:
         "No. of Sprints": "sum",
         "Top Speed (kph)": "max"
     }).to_frame().T
-    
 
-    # Skip players with no valid sessions
-    # Skip players with no valid sessions
     if grouped_trainings.empty:
         continue
 
-    # === DEBUG BLOCK: Inspect training week logic ===
+    # === DEBUG BLOCK ===
     st.markdown(f"<hr><h4>🧪 Debug Info – {player}</h4>", unsafe_allow_html=True)
-
-    # Print match cutoff and training block end
     st.markdown(f"""
     <ul style='font-size:16px;'>
       <li>📅 <strong>Match Cutoff Date:</strong> {match_cutoff_date.date()}</li>
@@ -218,11 +209,9 @@ for player in players:
     </ul>
     """, unsafe_allow_html=True)
 
-    # Ensure training_week metrics are numeric
     for m in metrics:
         training_week[m] = pd.to_numeric(training_week[m], errors="coerce")
 
-    # Preview the actual training week rows if available
     if not training_week.empty:
         st.markdown("**📋 Training Week Data Preview:**")
         preview_cols = ["Date", "Session Type"] + metrics
@@ -230,7 +219,7 @@ for player in players:
     else:
         st.warning("⚠️ No training sessions found in the window.")
 
-    # === PLAYER GAUGES ===
+    # === Render Gauges ===
     st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
     valid_players += 1
