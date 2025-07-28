@@ -165,28 +165,69 @@ for player in players:
 
     top_speed_benchmark = player_data["Top Speed (kph)"].max()
 
-    # === Get 3 trainings after latest match ===
+    # === Get training sessions after latest match ===
     training_rows = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"] > match_cutoff_date)
     ].copy()
 
-    # Group by date
-    grouped_trainings = (
-    training_rows.groupby("Date").agg({
+    # === Get the future match after this one ===
+    future_matches = matches[matches["Date"] > match_cutoff_date]
+
+    # Define end of calendar week (Sunday)
+    week_end_date = match_cutoff_date + timedelta(days=(6 - match_cutoff_date.weekday()))
+
+    # Check if next match happens before the week ends
+    midweek_match = future_matches[future_matches["Date"] <= week_end_date]
+
+    if not midweek_match.empty:
+        training_block_end = midweek_match["Date"].min()  # midweek reset
+    else:
+        training_block_end = week_end_date  # standard reset on Sunday
+
+    # Define training week
+    training_week = training_rows[
+        (training_rows["Date"] > match_cutoff_date) &
+        (training_rows["Date"] < training_block_end)
+    ]
+
+    # Aggregate training data
+    grouped_trainings = training_week.agg({
         "Distance (m)": "sum",
         "High Intensity Running (m)": "sum",
         "Sprint Distance (m)": "sum",
         "No. of Sprints": "sum",
-        "Top Speed (kph)": "max"  # ✅ key fix here!
-    })
-    .reset_index()
-    .sort_values("Date")
-    .head(3)
-)
+        "Top Speed (kph)": "max"
+    }).to_frame().T
+    
 
+    # Skip players with no valid sessions
     if grouped_trainings.empty:
-        continue  # ✅ This is valid now — inside the player loop
+        continue
+    # === DEBUG BLOCK: Inspect training week logic ===
+st.markdown(f"<hr><h4>🧪 Debug Info – {player}</h4>", unsafe_allow_html=True)
+
+# Print match cutoff and training block end
+st.markdown(f"""
+<ul style='font-size:16px;'>
+  <li>📅 <strong>Match Cutoff Date:</strong> {match_cutoff_date.date()}</li>
+  <li>📅 <strong>Training Block End:</strong> {training_block_end.date()}</li>
+  <li>📊 <strong>Training Sessions Found:</strong> {len(training_week)}</li>
+</ul>
+""", unsafe_allow_html=True)
+
+# Ensure training_week metrics are numeric
+for m in metrics:
+    training_week[m] = pd.to_numeric(training_week[m], errors="coerce")
+
+# Preview the actual training week rows if available
+if not training_week.empty:
+    st.markdown("**📋 Training Week Data Preview:**")
+    preview_cols = ["Date", "Session Type"] + metrics
+    st.dataframe(training_week[preview_cols].sort_values("Date"), use_container_width=True)
+else:
+    st.warning("⚠️ No training sessions found in the window.")
+
 
     st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
