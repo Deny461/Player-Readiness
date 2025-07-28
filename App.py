@@ -257,7 +257,7 @@ if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
 
 with cols[i]:
     st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
-    st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
+    st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}-{i}")
 
     flag = ""
     # (flag calculation code)
