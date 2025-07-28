@@ -169,11 +169,11 @@ for player in players:
         (iso_vals_player["year"] == iso_year)
     ]
 
-    # If player has no training for the global week → create a dummy row
-    if training_week.shape[0] == 0:
+      # Ensure we always have a row for the global week
+    if training_week.empty:
         training_week = pd.DataFrame([{
             "Athlete Name": player,
-            "Date": latest_training_date,  # anchor to global latest
+            "Date": latest_training_date,
             "Session Type": "Training Session",
             "Segment Name": "Whole Session",
             "Distance (m)": 0,
@@ -181,8 +181,18 @@ for player in players:
             "Sprint Distance (m)": 0,
             "No. of Sprints": 0,
             "Top Speed (kph)": 0,
-            "Duration (mins)": 0
+            "Duration (mins)": 0,
+            "Year": iso_year,
+            "Week": iso_week,
+            "PracticeNumber": 0
         }])
+    else:
+        iso_vals = training_week["Date"].dt.isocalendar()
+        training_week["Year"] = iso_vals.year
+        training_week["Week"] = iso_vals.week
+        training_week["PracticeNumber"] = (
+            training_week.groupby(["Year", "Week"]).cumcount() + 1
+        ).clip(upper=3)
 
     # Compute match averages (exclude Top Speed)
     match_avg = {}
