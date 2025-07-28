@@ -264,12 +264,12 @@ for player in players:
 
         if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
             flag = "🔮⚠️" if projection_used else "⚠️"
-else:
+        else:
     # For Top Speed — no flagging/projection, just report current week vs benchmark
-    flag = ""
-    flag_val = train_val
-    projected_total = "N/A"
-    projection_used = False
+            flag = ""
+            flag_val = train_val
+            projected_total = "N/A"
+            projection_used = False
 
             # Debug Info
     st.markdown(f"""
