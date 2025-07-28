@@ -174,4 +174,3 @@ for player in players:
                     • ⚠️ Flag: {'YES' if flag else 'NO'}
                 </div>
                 """,unsafe_allow_html=True)
-
