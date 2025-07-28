@@ -217,9 +217,9 @@ for player in players:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-            if metric != "Top Speed (kph)":
+    if metric != "Top Speed (kph)":
         # === Flagging ===
-                flag = ""
+        flag = ""
         training_week_sorted = training_week.sort_values("Date").copy()
         practices_done = training_week_sorted.shape[0]
         current_sum = training_week[metric].sum()
