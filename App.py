@@ -203,44 +203,27 @@ for player in players:
     valid_players += 1
 
     for i, metric in enumerate(metrics):
+        if metric == "Top Speed (kph)":
+            train_val = grouped_trainings[metric].max()
+            benchmark = top_speed_benchmark
+        else:
+            train_val = grouped_trainings[metric].sum()
+            benchmark = match_avg.get(metric, None)
+
         label = metric_labels[metric]
-
-    # === Handle Top Speed separately ===
-    if metric == "Top Speed (kph)":
-        train_val = grouped_trainings[metric].max()
-        benchmark = top_speed_benchmark
         fig = create_readiness_gauge(train_val, benchmark, label)
 
         with cols[i]:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-            # Simple debug for Top Speed — no projections/flags
-            st.markdown(f"""
-            <div style='font-size:14px; color:#555;'>
-                <b>Debug for {label}</b><br>
-                • Value This Week: {train_val:.1f}<br>
-                • Benchmark (Max Ever): {benchmark:.1f}<br>
-                • ⚠️ Flag: Not Applicable
-            </div>
-            """, unsafe_allow_html=True)
-
-    # === Handle All Other Metrics ===
-    else:
-        train_val = grouped_trainings[metric].sum()
-        benchmark = match_avg.get(metric, None)
-        fig = create_readiness_gauge(train_val, benchmark, label)
-
-        with cols[i]:
-            st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
-            st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
-
+            # === Flagging ===
             flag = ""
             training_week_sorted = training_week.sort_values("Date").copy()
             practices_done = training_week_sorted.shape[0]
             current_sum = training_week[metric].sum()
 
-            # === Previous Week ===
+            # Previous Week
             latest_year, latest_week, _ = latest_training_date.isocalendar()
             if latest_week == 1:
                 prev_week, prev_year = 52, latest_year - 1
@@ -255,14 +238,13 @@ for player in players:
             ]
             previous_week_total = previous_week_data[metric].sum()
 
-            # === Historical Practice Avgs ===
+            # Historical Averages
             practice_avgs = (
                 player_data[player_data["Session Type"] == "Training Session"]
                 .groupby("PracticeNumber")[metric].mean()
                 .reindex([1, 2, 3], fill_value=0)
             )
 
-            # === Flagging ===
             if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
                 flag = "⚠️"
                 flag_val = current_sum
@@ -282,7 +264,7 @@ for player in players:
                 if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
                     flag = "🔮⚠️" if projection_used else "⚠️"
 
-            # === Debug Info ===
+            # Debug Info
             st.markdown(f"""
             <div style='font-size:14px; color:#555;'>
                 <b>Debug for {label}</b><br>
@@ -296,4 +278,3 @@ for player in players:
                 • ⚠️ Flag: {'YES' if flag else 'NO'}
             </div>
             """, unsafe_allow_html=True)
-
