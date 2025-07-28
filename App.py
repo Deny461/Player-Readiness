@@ -255,33 +255,3 @@ if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
                     unsafe_allow_html=True
                 )
 
-with cols[i]:
-    st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
-    st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}-{i}")
-
-    flag = ""
-    # (flag calculation code)
-if metric != "Top Speed (kph)":
-    try:
-        previous = f"{previous_week_total:.1f}" if 'previous_week_total' in locals() else "N/A"
-        current = f"{current_sum:.1f}" if 'current_sum' in locals() else "N/A"
-        projected = f"{projected_total:.1f}" if 'projected_total' in locals() else "N/A"
-        value_used = f"{flag_val:.1f}" if 'flag_val' in locals() else "N/A"
-        threshold = f"{(1.10 * previous_week_total):.1f}" if 'previous_week_total' in locals() else "N/A"
-        flag_text = "YES" if flag else "NO"
-
-        debug_lines = [
-            f"<b>📊 Flag Debug for {label}:</b>",
-            f"• Previous Week Total: {previous}",
-            f"• Current Week Total: {current}",
-            f"• Projected Week Total: {projected}" if not thursday_done else f"• Thursday already done",
-            f"• Value Used: {'Actual' if thursday_done else 'Projected'} = {value_used}",
-            f"• Threshold (110%): {threshold}",
-            f"• ⚠️ Flag: {flag_text}"
-        ]
-        st.markdown(
-            "<div style='font-size:13px; color:#444; margin-bottom:12px;'>" + "<br>".join(debug_lines) + "</div>",
-            unsafe_allow_html=True
-        )
-    except Exception as e:
-        st.markdown(f"<div style='color:red;'>Debug Error: {e}</div>", unsafe_allow_html=True)
