@@ -8,20 +8,19 @@ import streamlit as st
 
 st.set_page_config(
     page_title="Player Readiness",
-    page_icon="BostonBoltsLogo.png",  # 👈 your logo here
+    page_icon="BostonBoltsLogo.png",
     layout="wide"
 )
 
 # === LOGO HEADER (Row 1) ===
 with st.container():
-    col1, col2, col3 = st.columns([0.05, 0.002, 0.52])  # Keep it tight
+    col1, col2, col3 = st.columns([0.05, 0.002, 0.52])
     with col1:
         st.image("BostonBoltsLogo.png", width=220)
     with col2:
         st.markdown("<div style='border-left:2px solid gray; height:180px;'></div>", unsafe_allow_html=True)
     with col3:
         st.image("MLSNextLogo.png", width=220)
-
 
 # === TITLE SECTION (Row 2) ===
 with st.container():
@@ -48,7 +47,7 @@ available_teams = [
 ]
 selected_team = st.selectbox("Select Team", available_teams)
 
-col_spacer, colA, colB, col_spacer2 = st.columns([0.0001, 0.1, 1.5, 1])  # Centered with minimal gap
+col_spacer, colA, colB, col_spacer2 = st.columns([0.0001, 0.1, 1.5, 1])
 with colA:
     if st.button("Continue"):
         st.session_state.proceed = True
@@ -185,14 +184,36 @@ for player in players:
         "Top Speed (kph)": "max"
     }).to_frame().T
 
+    # 🧠 Dynamic Weekday Load Prediction
+    player_data["Week"] = player_data["Date"].dt.isocalendar().week
+    player_data["Weekday"] = player_data["Date"].dt.day_name()
+
+    weekday_avg = player_data[
+        (player_data["Session Type"] == "Training Session") &
+        (player_data["Week"] != iso_week)
+    ].groupby("Weekday")[metrics].mean()
+
+    completed_days = training_week["Date"].dt.day_name().unique()
+    remaining_days = [d for d in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] if d not in completed_days]
+
+    projected_load = training_week[metrics].sum()
+    for day in remaining_days:
+        if day in weekday_avg.index:
+            projected_load += weekday_avg.loc[day]
+
+    historical_weekly_load = player_data[
+        (player_data["Session Type"] == "Training Session") &
+        (player_data["Week"] != iso_week)
+    ].groupby("Week")[metrics].sum().mean()
+
     if grouped_trainings.empty:
         continue
 
     st.markdown(f"<hr><h4>🧪 Debug Info – {player}</h4>", unsafe_allow_html=True)
     st.markdown(f"""
     <ul style='font-size:16px;'>
-      <li>📅 <strong>Match Cutoff Date:</strong> {match_cutoff_date.date()}</li>
-      <li>📅 <strong>Training Week Start:</strong> {week_start.date()}</li>
+      <li>🗕️ <strong>Match Cutoff Date:</strong> {match_cutoff_date.date()}</li>
+      <li>🗕️ <strong>Training Week Start:</strong> {week_start.date()}</li>
       <li>📊 <strong>Training Sessions Found:</strong> {len(training_week)}</li>
     </ul>
     """, unsafe_allow_html=True)
@@ -220,8 +241,14 @@ for player in players:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-            if benchmark and benchmark > 0:
-                st.markdown(
-                    f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>",
-                    unsafe_allow_html=True
-                )
+            flag_text = ""
+            if metric != "Top Speed (kph)":
+                projected = projected_load[metric]
+                baseline = historical_weekly_load[metric]
+                if pd.notna(projected) and pd.notna(baseline) and projected > baseline * 1.10:
+                    flag_text = f"<div style='text-align: center; font-size: 16px; color: red;'>⚠️ Projected {projected:.1f} > {baseline:.1f} (+10%)</div>"
+
+            st.markdown(
+                f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f}</div>{flag_text}",
+                unsafe_allow_html=True
+            )
