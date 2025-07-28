@@ -255,7 +255,9 @@ if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
                     unsafe_allow_html=True
                 )
 
-                debug_lines = [
+if metric != "Top Speed (kph)":
+    try:
+        debug_lines = [
             f"<b>📊 Flag Debug for {label}:</b>",
             f"• Previous Week Total: {previous_week_total:.1f}",
             f"• Current Week Total: {current_sum:.1f}",
@@ -263,4 +265,10 @@ if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
             f"• Value Used: {'Actual' if thursday_done else 'Projected'} = {flag_val:.1f}",
             f"• Threshold (110%): {(1.10 * previous_week_total):.1f}",
             f"• ⚠️ Flag: {'YES' if flag else 'NO'}"
-]
+        ]
+        st.markdown(
+            "<div style='font-size:13px; color:#444; margin-bottom:12px;'>" + "<br>".join(debug_lines) + "</div>",
+            unsafe_allow_html=True
+        )
+    except Exception as e:
+        st.markdown(f"<div style='color:red;'>Debug Error: {e}</div>", unsafe_allow_html=True)
