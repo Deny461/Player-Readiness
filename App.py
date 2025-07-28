@@ -154,40 +154,47 @@ for player in players:
 
     matches = player_data[
         (player_data["Session Type"] == "Match Session") &
+        (player_data["Date"] <= match_cutoff_date) &
         (player_data["Duration (mins)"] > 0)
     ].sort_values("Date")
 
     if matches.empty:
         continue
 
-    latest_match_date = matches["Date"].max()
-
-    # === Only count trainings AFTER the latest match ===
-    training_after_match = player_data[
+      # === Force Global Week for All Players ===
+    iso_vals_player = player_data["Date"].dt.isocalendar()
+    training_week = player_data[
         (player_data["Session Type"] == "Training Session") &
-        (player_data["Date"] > latest_match_date)
+        (iso_vals_player["week"] == iso_week) &
+        (iso_vals_player["year"] == iso_year)
     ]
 
-    # === If no training after match → RESET to 0s ===
-    if training_after_match.empty:
-        st.markdown(f"### {player}")
-        cols = st.columns(len(metrics))
-        for i, metric in enumerate(metrics):
-            label = metric_labels[metric]
-            if metric == "Top Speed (kph)":
-                benchmark = player_data["Top Speed (kph)"].max()
-            else:
-                matches["Per90"] = matches[metric] / matches["Duration (mins)"] * 90
-                benchmark = matches["Per90"].mean()
+      # Ensure we always have a row for the global week
+    if training_week.empty:
+        training_week = pd.DataFrame([{
+            "Athlete Name": player,
+            "Date": latest_training_date,
+            "Session Type": "Training Session",
+            "Segment Name": "Whole Session",
+            "Distance (m)": 0,
+            "High Intensity Running (m)": 0,
+            "Sprint Distance (m)": 0,
+            "No. of Sprints": 0,
+            "Top Speed (kph)": 0,
+            "Duration (mins)": 0,
+            "Year": iso_year,
+            "Week": iso_week,
+            "PracticeNumber": 0
+        }])
+    else:
+        iso_vals = training_week["Date"].dt.isocalendar()
+        training_week["Year"] = iso_vals.year
+        training_week["Week"] = iso_vals.week
+        training_week["PracticeNumber"] = (
+            training_week.groupby(["Year", "Week"]).cumcount() + 1
+        ).clip(upper=3)
 
-            fig = create_readiness_gauge(0, benchmark, label)
-            with cols[i]:
-                st.markdown(f"<div style='text-align:center;font-weight:bold;'>{label}</div>", unsafe_allow_html=True)
-                st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
-                st.markdown("<div style='font-size:14px;color:#777;'>No training after last match → gauges reset.</div>", unsafe_allow_html=True)
-        continue
-
-    # === Else: normal weekly calc with training_after_match ===
+    # Compute match averages (exclude Top Speed)
     match_avg = {}
     for m in metrics:
         if m == "Top Speed (kph)":
@@ -197,7 +204,7 @@ for player in players:
 
     top_speed_benchmark = player_data["Top Speed (kph)"].max()
 
-    grouped_trainings = training_after_match.agg({
+    grouped_trainings = training_week.agg({
         "Distance (m)": "sum",
         "High Intensity Running (m)": "sum",
         "Sprint Distance (m)": "sum",
@@ -205,8 +212,22 @@ for player in players:
         "Top Speed (kph)": "max"
     }).to_frame().T
 
+    # Assign practice numbers for averages
+    player_data = player_data.sort_values("Date").copy()
+    iso_vals_all = player_data["Date"].dt.isocalendar()
+    player_data["Year"] = iso_vals_all.year
+    player_data["Week"] = iso_vals_all.week
+    player_data["PracticeNumber"] = (
+        player_data[player_data["Session Type"] == "Training Session"]
+        .groupby(["Year", "Week"])
+        .cumcount() + 1
+    )
+    player_data.loc[player_data["PracticeNumber"] > 3, "PracticeNumber"] = 3
+
     st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
+    valid_players += 1
+
     for i, metric in enumerate(metrics):
         if metric == "Top Speed (kph)":
             train_val = grouped_trainings[metric].max()
@@ -217,6 +238,70 @@ for player in players:
 
         label = metric_labels[metric]
         fig = create_readiness_gauge(train_val, benchmark, label)
+
         with cols[i]:
-            st.markdown(f"<div style='text-align:center;font-weight:bold;'>{label}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
+
+            # === Flagging === (skip for Top Speed)
+            if metric != "Top Speed (kph)":
+                flag = ""
+                training_week_sorted = training_week.sort_values("Date").copy()
+                practices_done = training_week_sorted.shape[0]
+                current_sum = training_week[metric].sum()
+
+                # Previous Week
+                latest_year, latest_week, _ = latest_training_date.isocalendar()
+                if latest_week == 1:
+                    prev_week, prev_year = 52, latest_year - 1
+                else:
+                    prev_week, prev_year = latest_week - 1, latest_year
+
+                iso_dates = player_data["Date"].dt.isocalendar()
+                previous_week_data = player_data[
+                    (player_data["Session Type"] == "Training Session") &
+                    (iso_dates["week"] == prev_week) &
+                    (iso_dates["year"] == prev_year)
+                ]
+                previous_week_total = previous_week_data[metric].sum()
+
+                # Historical Averages
+                practice_avgs = (
+                    player_data[player_data["Session Type"] == "Training Session"]
+                    .groupby("PracticeNumber")[metric].mean()
+                    .reindex([1, 2, 3], fill_value=0)
+                )
+
+                if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
+                    flag = "⚠️"
+                    flag_val = current_sum
+                    projection_used = False
+                    projected_total = "N/A"
+                else:
+                    if practices_done < 3:
+                        needed_practices = [p for p in range(practices_done + 1, 4)]
+                        projected_total = current_sum + practice_avgs.loc[needed_practices].sum()
+                        flag_val = projected_total
+                        projection_used = True
+                    else:
+                        projected_total = "N/A"
+                        flag_val = current_sum
+                        projection_used = False
+
+                    if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
+                        flag = "🔮⚠️" if projection_used else "⚠️"
+
+                # Debug Info
+                st.markdown(f"""
+                <div style='font-size:14px; color:#555;'>
+                    <b>Debug for {label}</b><br>
+                    • Previous Week Total: {previous_week_total:.1f}<br>
+                    • Current Week So Far: {current_sum:.1f}<br>
+                    • Practices Done: {practices_done}<br>
+                    • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
+                    • Projected Total: {projected_total if projection_used else 'N/A'}<br>
+                    • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
+                    • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
+                    • ⚠️ Flag: {'YES' if flag else 'NO'}
+                </div>
+                """, unsafe_allow_html=True)
