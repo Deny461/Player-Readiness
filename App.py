@@ -161,7 +161,7 @@ for player in players:
     if matches.empty:
         continue
 
-     # Force all players to use the global latest week
+      # === Force Global Week for All Players ===
     iso_vals_player = player_data["Date"].dt.isocalendar()
     training_week = player_data[
         (player_data["Session Type"] == "Training Session") &
@@ -169,11 +169,11 @@ for player in players:
         (iso_vals_player["year"] == iso_year)
     ]
 
-    # If this player has no training in the global week → inject a 0 row
-    if training_week.empty:
-            training_week = pd.DataFrame([{
+    # If player has no training for the global week → create a dummy row
+    if training_week.shape[0] == 0:
+        training_week = pd.DataFrame([{
             "Athlete Name": player,
-            "Date": latest_training_date,
+            "Date": latest_training_date,  # anchor to global latest
             "Session Type": "Training Session",
             "Segment Name": "Whole Session",
             "Distance (m)": 0,
