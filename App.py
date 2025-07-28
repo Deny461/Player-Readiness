@@ -96,23 +96,15 @@ for player in players:
                         (player_data["Duration (mins)"]>0)].sort_values("Date")
     if matches.empty: continue
 
-    # === Find most recent training week (<= latest match) ===
-    iso_vals_all = player_data["Date"].dt.isocalendar()
-    player_data["Year"] = iso_vals_all.year
-    player_data["Week"] = iso_vals_all.week
-
-    player_training = player_data[(player_data["Session Type"] == "Training Session") &
-                                  (player_data["Date"] <= latest_match_date)]
-    if not player_training.empty:
-        latest_train_year, latest_train_week = player_training.sort_values("Date").iloc[-1][["Year","Week"]]
-        training_week = player_training[(player_training["Year"] == latest_train_year) &
-                                        (player_training["Week"] == latest_train_week)]
-    else:
+    iso_vals=player_data["Date"].dt.isocalendar()
+    training_week=player_data[(player_data["Session Type"]=="Training Session")&
+                              (iso_vals["week"]==iso_week)&
+                              (iso_vals["year"]==iso_year)]
+    if training_week.empty:
         training_week=pd.DataFrame([{
             "Athlete Name":player,"Date":latest_match_date,"Session Type":"Training Session",
             "Segment Name":"Whole Session","Distance (m)":0,"High Intensity Running (m)":0,
-            "Sprint Distance (m)":0,"No. of Sprints":0,"Top Speed (kph)":0,"Duration (mins)":0,
-            "Year":iso_year,"Week":iso_week,"PracticeNumber":0
+            "Sprint Distance (m)":0,"No. of Sprints":0,"Top Speed (kph)":0,"Duration (mins)":0
         }])
 
     # Match averages (exclude Top Speed)
@@ -141,7 +133,7 @@ for player in players:
             st.markdown(f"<div style='text-align:center;font-weight:bold;'>{metric_labels[metric]}</div>",unsafe_allow_html=True)
             st.plotly_chart(fig,use_container_width=True,key=f"{player}-{metric}")
 
-            # === Flagging (Skip Top Speed) ===
+                        # === Flagging (Skip Top Speed) ===
             if metric != "Top Speed (kph)":
                 flag = ""
                 practices_done = training_week.shape[0]
@@ -158,7 +150,7 @@ for player in players:
                 ]
                 previous_week_total = previous_week_data[metric].sum()
 
-                # Historical Averages
+                # Historical Averages by PracticeNumber
                 iso_vals_all = player_data["Date"].dt.isocalendar()
                 player_data["PracticeNumber"] = (
                     player_data[player_data["Session Type"] == "Training Session"]
@@ -172,6 +164,7 @@ for player in players:
                     .reindex([1, 2, 3], fill_value=0)
                 )
 
+                # Flagging logic
                 if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
                     flag = "⚠️"
                     flag_val = current_sum
