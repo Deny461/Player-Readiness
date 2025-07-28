@@ -184,43 +184,8 @@ for player in players:
         "Top Speed (kph)": "max"
     }).to_frame().T
 
-    # 🧠 Dynamic Weekday Load Prediction
     player_data["Week"] = player_data["Date"].dt.isocalendar().week
     player_data["Weekday"] = player_data["Date"].dt.day_name()
-
-    weekday_avg = player_data[
-        (player_data["Session Type"] == "Training Session") &
-        (player_data["Week"] != iso_week)
-    ].groupby("Weekday")[metrics].mean()
-
-    completed_days = training_week["Date"].dt.day_name().unique()
-    remaining_days = [d for d in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] if d not in completed_days]
-
-    projected_load = training_week[metrics].sum()
-    for day in remaining_days:
-        if day in weekday_avg.index:
-            projected_load += weekday_avg.loc[day]
-
-    historical_weekly_load = player_data[
-        (player_data["Session Type"] == "Training Session") &
-        (player_data["Week"] != iso_week)
-    ].groupby("Week")[metrics].sum().mean()
-
-    if grouped_trainings.empty:
-        continue
-
-    st.markdown(f"<hr><h4>🧪 Debug Info – {player}</h4>", unsafe_allow_html=True)
-    st.markdown(f"""
-    <ul style='font-size:16px;'>
-      <li>🗕️ <strong>Match Cutoff Date:</strong> {match_cutoff_date.date()}</li>
-      <li>🗕️ <strong>Training Week Start:</strong> {week_start.date()}</li>
-      <li>📊 <strong>Training Sessions Found:</strong> {len(training_week)}</li>
-    </ul>
-    """, unsafe_allow_html=True)
-
-    st.markdown("**📋 Training Week Data Preview:**")
-    preview_cols = ["Date", "Session Type"] + metrics
-    st.dataframe(training_week[preview_cols].sort_values("Date"), use_container_width=True)
 
     st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
@@ -241,53 +206,44 @@ for player in players:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-            # === ⚠️ Weekly Load Flag Logic ===
-flag = ""
-if metric != "Top Speed (kph)" and benchmark and benchmark > 0:
-    # Calculate historical averages per weekday
-    weekday_avgs = player_data[
-        (player_data["Session Type"] == "Training Session")
-    ].groupby(player_data["Date"].dt.day_name())[metric].mean()
+            flag = ""
+            if metric != "Top Speed (kph)":
+                weekday_avgs = player_data[
+                    (player_data["Session Type"] == "Training Session")
+                ].groupby("Weekday")[metric].mean()
 
-    current_weekdays = training_week["Date"].dt.day_name().tolist()
-    current_day = latest_training_date.day_name()
+                current_weekdays = training_week["Date"].dt.day_name().tolist()
+                current_day = latest_training_date.day_name()
+                current_sum = training_week[metric].sum()
+                thursday_done = "Thursday" in current_weekdays
 
-    # Sum of current week's values
-    current_sum = training_week[metric].sum()
+                if not thursday_done:
+                    projected_total = sum([weekday_avgs.get(day, 0) for day in ["Tuesday", "Wednesday", "Thursday"]])
+                    flag_val = projected_total
+                else:
+                    flag_val = current_sum
 
-    # Determine if Thursday is completed
-    thursday_done = "Thursday" in current_weekdays
+                weekly_avg = player_data[
+                    (player_data["Session Type"] == "Training Session")
+                ].groupby("Week")[metric].sum().mean()
 
-    # Projected total only if Thursday not done
-    if not thursday_done:
-        days_so_far = len(current_weekdays)
-        projected_total = 0
-        for day in ["Tuesday", "Wednesday", "Thursday"]:
-            projected_total += weekday_avgs.get(day, 0)
-        flag_val = projected_total
-    else:
-        flag_val = current_sum
+                if weekly_avg > 0 and flag_val > 1.10 * weekly_avg:
+                    flag = "⚠️" if thursday_done else "🔮⚠️"
 
-    weekly_avg = player_data[
-        (player_data["Session Type"] == "Training Session")
-    ].groupby(player_data["Date"].dt.isocalendar().week)[metric].sum().mean()
+                st.markdown(
+                    f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f} {flag}</div>",
+                    unsafe_allow_html=True
+                )
 
-    if weekly_avg > 0 and flag_val > 1.10 * weekly_avg:
-        flag = "⚠️" if thursday_done else "🔮⚠️"
-        
-        st.markdown(
-    f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f} {flag}</div>",
-    unsafe_allow_html=True
-)
-if metric != "Top Speed (kph)":
-    st.markdown(f"""
-    <div style='font-size:14px; color:#555;'>
-        <b>Debug for {label}</b><br>
-        • Weekly Avg: {weekly_avg:.1f}<br>
-        • Current Sum: {current_sum:.1f}<br>
-        • Projected Total: {projected_total:.1f}<br>
-        • Final Used: {flag_val:.1f}<br>
-        • Threshold (110%): {1.10 * weekly_avg:.1f}<br>
-        • ⚠️ Flag: {'YES' if flag else 'NO'}
-    </div>
-    """, unsafe_allow_html=True)
+                # === DEBUG INFO ===
+                st.markdown(f"""
+                <div style='font-size:14px; color:#555;'>
+                    <b>Debug for {label}</b><br>
+                    • Weekly Avg: {weekly_avg:.1f}<br>
+                    • Current Sum: {current_sum:.1f}<br>
+                    • Projected Total: {projected_total if not thursday_done else 'N/A'}<br>
+                    • Final Used: {flag_val:.1f}<br>
+                    • Threshold (110%): {1.10 * weekly_avg:.1f}<br>
+                    • ⚠️ Flag: {'YES' if flag else 'NO'}
+                </div>
+                """, unsafe_allow_html=True)
