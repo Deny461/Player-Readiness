@@ -148,13 +148,34 @@ for player in players:
     # Find most recent previous training week with data
     prev_training = player_data[(player_data["Session Type"]=="Training Session") &
                                 (player_data["Date"]<training_week["Date"].min())]
+     # Find most recent previous training week with actual data (>0 load)
+    prev_training = player_data[
+        (player_data["Session Type"]=="Training Session") &
+        (player_data["Date"]<training_week["Date"].min())
+    ]
+
     if not prev_training.empty:
-        last_date = prev_training["Date"].max()
-        iso_prev = last_date.isocalendar()
-        prev_week_str = f"Week {iso_prev.week}, {iso_prev.year}"
-        previous_week_data = prev_training[(prev_training["Date"].dt.isocalendar().week==iso_prev.week) &
-                                           (prev_training["Date"].dt.isocalendar().year==iso_prev.year)]
-        previous_week_total_map = {m: previous_week_data[m].sum() for m in metrics if m!="Top Speed (kph)"}
+        # Group by ISO week/year to filter out 0-load weeks
+        prev_training['Year'] = prev_training['Date'].dt.isocalendar().year
+        prev_training['Week'] = prev_training['Date'].dt.isocalendar().week
+        week_sums = prev_training.groupby(['Year','Week'])[metrics].sum().reset_index()
+
+        # Only keep weeks with non-zero totals
+        valid_weeks = week_sums[(week_sums.drop(columns=['Year','Week']) > 0).any(axis=1)]
+
+        if not valid_weeks.empty:
+            last_valid = valid_weeks.iloc[-1]  # most recent non-zero week
+            prev_week_str = f"Week {int(last_valid['Week'])}, {int(last_valid['Year'])}"
+            previous_week_data = prev_training[
+                (prev_training['Date'].dt.isocalendar().week == last_valid['Week']) &
+                (prev_training['Date'].dt.isocalendar().year == last_valid['Year'])
+            ]
+            previous_week_total_map = {
+                m: previous_week_data[m].sum() for m in metrics if m!="Top Speed (kph)"
+            }
+        else:
+            prev_week_str="None"
+            previous_week_total_map={m:0 for m in metrics if m!="Top Speed (kph)"}
     else:
         prev_week_str="None"
         previous_week_total_map={m:0 for m in metrics if m!="Top Speed (kph)"}
