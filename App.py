@@ -233,11 +233,12 @@ for player in players:
                         prev_year = latest_year
 
                     # === Get Previous Week Data ===
+                    iso_dates = player_data["Date"].dt.isocalendar()
                     previous_week_data = player_data[
-                        (player_data["Session Type"] == "Training Session") &
-                        (player_data["Date"].dt.isocalendar().week == prev_week) &
-                        (player_data["Date"].dt.isocalendar().year == prev_year)
-                    ]
+                    (player_data["Session Type"] == "Training Session") &
+                    (iso_dates["week"] == prev_week) &
+                    (iso_dates["year"] == prev_year)
+]
 
                     previous_week_total = previous_week_data[metric].sum()
 
