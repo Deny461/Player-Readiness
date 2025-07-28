@@ -154,28 +154,26 @@ for player in players:
 
     matches = player_data[
         (player_data["Session Type"] == "Match Session") &
-        (player_data["Date"] <= match_cutoff_date) &
         (player_data["Duration (mins)"] > 0)
     ].sort_values("Date")
 
     if matches.empty:
         continue
 
-    # === Force ALL players into the global week ===
-    iso_vals_player = player_data["Date"].dt.isocalendar()
-    training_week = player_data[
+    latest_match_date = matches["Date"].max()
+
+    # === Only count trainings AFTER the latest match ===
+    training_after_match = player_data[
         (player_data["Session Type"] == "Training Session") &
-        (iso_vals_player["week"] == iso_week) &
-        (iso_vals_player["year"] == iso_year)
+        (player_data["Date"] > latest_match_date)
     ]
 
-    # If no training rows exist for this player in global week → hard reset to 0
-    if training_week.empty:
+    # === If no training after match → RESET to 0s ===
+    if training_after_match.empty:
         st.markdown(f"### {player}")
         cols = st.columns(len(metrics))
         for i, metric in enumerate(metrics):
             label = metric_labels[metric]
-            benchmark = None
             if metric == "Top Speed (kph)":
                 benchmark = player_data["Top Speed (kph)"].max()
             else:
@@ -186,10 +184,10 @@ for player in players:
             with cols[i]:
                 st.markdown(f"<div style='text-align:center;font-weight:bold;'>{label}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
-                st.markdown("<div style='font-size:14px;color:#777;'>No training this week → gauges set to 0.</div>", unsafe_allow_html=True)
-        continue  # skip to next player
+                st.markdown("<div style='font-size:14px;color:#777;'>No training after last match → gauges reset.</div>", unsafe_allow_html=True)
+        continue
 
-    # Compute match averages (exclude Top Speed)
+    # === Else: normal weekly calc with training_after_match ===
     match_avg = {}
     for m in metrics:
         if m == "Top Speed (kph)":
@@ -199,7 +197,7 @@ for player in players:
 
     top_speed_benchmark = player_data["Top Speed (kph)"].max()
 
-    grouped_trainings = training_week.agg({
+    grouped_trainings = training_after_match.agg({
         "Distance (m)": "sum",
         "High Intensity Running (m)": "sum",
         "Sprint Distance (m)": "sum",
@@ -209,7 +207,6 @@ for player in players:
 
     st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
-
     for i, metric in enumerate(metrics):
         if metric == "Top Speed (kph)":
             train_val = grouped_trainings[metric].max()
@@ -220,7 +217,6 @@ for player in players:
 
         label = metric_labels[metric]
         fig = create_readiness_gauge(train_val, benchmark, label)
-
         with cols[i]:
             st.markdown(f"<div style='text-align:center;font-weight:bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
