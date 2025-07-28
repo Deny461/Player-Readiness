@@ -136,6 +136,7 @@ players = sorted(df["Athlete Name"].dropna().unique())
 # 🔁 Use same training week for all players
 global_training_df = df[df["Session Type"] == "Training Session"]
 latest_training_date = global_training_df["Date"].max()
+st.write("🌐 Global Latest Training Date:", latest_training_date)
 if pd.isna(latest_training_date):
     st.warning("No training sessions found in dataset.")
     st.stop()
