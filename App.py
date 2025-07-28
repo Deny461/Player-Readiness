@@ -223,27 +223,42 @@ for player in players:
                 else:
                     flag_val = current_sum
 
-                weekly_avg = player_data[
-                    (player_data["Session Type"] == "Training Session")
-                ].groupby("Week")[metric].sum().mean()
+                # Identify previous ISO week and year
+latest_year, latest_week, _ = latest_training_date.isocalendar()
+if latest_week == 1:
+    prev_week = 52
+    prev_year = latest_year - 1
+else:
+    prev_week = latest_week - 1
+    prev_year = latest_year
 
-                if weekly_avg > 0 and flag_val > 1.10 * weekly_avg:
-                    flag = "⚠️" if thursday_done else "🔮⚠️"
+# Filter data for previous week
+previous_week_data = player_data[
+    (player_data["Session Type"] == "Training Session") &
+    (player_data["Date"].dt.isocalendar().week == prev_week) &
+    (player_data["Date"].dt.isocalendar().year == prev_year)
+]
 
-                st.markdown(
-                    f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f} {flag}</div>",
-                    unsafe_allow_html=True
-                )
+# Calculate total for the metric in previous week
+previous_week_total = previous_week_data[metric].sum()
 
-                # === DEBUG INFO ===
-                st.markdown(f"""
-                <div style='font-size:14px; color:#555;'>
-                    <b>Debug for {label}</b><br>
-                    • Weekly Avg: {weekly_avg:.1f}<br>
-                    • Current Sum: {current_sum:.1f}<br>
-                    • Projected Total: {projected_total if not thursday_done else 'N/A'}<br>
-                    • Final Used: {flag_val:.1f}<br>
-                    • Threshold (110%): {1.10 * weekly_avg:.1f}<br>
-                    • ⚠️ Flag: {'YES' if flag else 'NO'}
-                </div>
-                """, unsafe_allow_html=True)
+if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
+    flag = "⚠️" if thursday_done else "🔮⚠️"
+
+st.markdown(
+    f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f} {flag}</div>",
+    unsafe_allow_html=True
+)
+
+# === DEBUG INFO ===
+st.markdown(f"""
+<div style='font-size:14px; color:#555;'>
+    <b>Debug for {label}</b><br>
+    • Previous Week Total: {previous_week_total:.1f}<br>
+    • Current Sum: {current_sum:.1f}<br>
+    • Projected Total: {projected_total if not thursday_done else 'N/A'}<br>
+    • Final Used: {flag_val:.1f}<br>
+    • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
+    • ⚠️ Flag: {'YES' if flag else 'NO'}
+</div>
+""", unsafe_allow_html=True)
