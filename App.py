@@ -134,6 +134,18 @@ def create_readiness_gauge(value, benchmark, label):
 valid_players = 0
 players = sorted(df["Athlete Name"].dropna().unique())
 
+# 🔁 Get latest training week globally (not per player)
+latest_training_date = df[df["Session Type"] == "Training Session"]["Date"].max()
+if pd.isna(latest_training_date):
+    st.warning("No training sessions found in dataset.")
+    st.stop()
+
+iso_year, iso_week, _ = latest_training_date.isocalendar()
+
+# Prepare training and match filters globally
+week_start = latest_training_date - timedelta(days=latest_training_date.weekday())
+match_cutoff_date = week_start - timedelta(days=1)
+
 for player in players:
     player_data = df[df["Athlete Name"] == player].copy()
 
@@ -142,18 +154,17 @@ for player in players:
     for m in metrics:
         player_data[m] = pd.to_numeric(player_data[m], errors="coerce")
 
-    matches = player_data[player_data["Session Type"] == "Match Session"].sort_values("Date")
+    # Matches before this ISO week (to avoid overlap)
+    matches = player_data[
+        (player_data["Session Type"] == "Match Session") &
+        (player_data["Date"] <= match_cutoff_date) &
+        (player_data["Duration (mins)"] > 0)
+    ].sort_values("Date")
+
     if matches.empty:
         continue
 
-    # Get latest training date and ISO week
-    latest_training = player_data[player_data["Session Type"] == "Training Session"]["Date"].max()
-    if pd.isna(latest_training):
-        continue
-
-    iso_year, iso_week, _ = latest_training.isocalendar()
-
-    # Only grab training sessions from same ISO week
+    # Training only from that global ISO week
     training_week = player_data[
         (player_data["Session Type"] == "Training Session") &
         (player_data["Date"].apply(lambda d: d.isocalendar()[:2] == (iso_year, iso_week)))
@@ -162,27 +173,17 @@ for player in players:
     if training_week.empty:
         continue
 
-    # Match cutoff: before current ISO week
-    week_start = latest_training - timedelta(days=latest_training.weekday())
-    match_cutoff_date = week_start - timedelta(days=1)
-    match_games = matches[matches["Date"] <= match_cutoff_date]
-    match_games = match_games[match_games["Duration (mins)"] > 0]
-
-    if match_games.empty:
-        continue
-
     # === Compute per-90 match averages ===
     match_avg = {}
     for m in metrics:
         if m == "Top Speed (kph)":
             continue
-        match_games["Per90"] = match_games[m] / match_games["Duration (mins)"] * 90
-        match_avg[m] = match_games["Per90"].mean()
+        matches["Per90"] = matches[m] / matches["Duration (mins)"] * 90
+        match_avg[m] = matches["Per90"].mean()
 
     top_speed_benchmark = player_data["Top Speed (kph)"].max()
-    training_block_end = latest_training  # Just reuse this for debug output
 
-    # === Group Weekly Training Stats ===
+    # === Group Training Stats ===
     grouped_trainings = training_week.agg({
         "Distance (m)": "sum",
         "High Intensity Running (m)": "sum",
@@ -199,7 +200,7 @@ for player in players:
     st.markdown(f"""
     <ul style='font-size:16px;'>
       <li>📅 <strong>Match Cutoff Date:</strong> {match_cutoff_date.date()}</li>
-      <li>📅 <strong>Training Block End:</strong> {training_block_end.date()}</li>
+      <li>📅 <strong>Training Week Start:</strong> {week_start.date()}</li>
       <li>📊 <strong>Training Sessions Found:</strong> {len(training_week)}</li>
     </ul>
     """, unsafe_allow_html=True)
