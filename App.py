@@ -31,7 +31,19 @@ with st.container():
 @st.cache_data
 def load_data(file):
     df = pd.read_csv(file)
-    df['Date'] = pd.to_datetime(df['Start Date'], format='%m/%d/%y', errors='coerce')
+    df.columns = df.columns.str.strip()
+    
+    if "Start Date" in df.columns:
+        # Explicit U.S. format (month/day/year)
+        df['Date'] = pd.to_datetime(
+            df['Start Date'], 
+            errors='coerce', 
+            format='%m/%d/%y'  # strict MM/DD/YY
+        )
+    else:
+        st.error("⚠️ 'Start Date' column missing in this file.")
+        st.stop()
+    
     return df
 
 # === 3. Session Control ===
@@ -289,7 +301,3 @@ for player in players:
                     • ⚠️ Flag: {'YES' if flag else 'NO'}
                 </div>
                 """, unsafe_allow_html=True)
-
-st.write("Unique Session Types:", df["Session Type"].unique())
-st.write("Sample Dates:", df["Date"].dropna().head(10))
-st.write("Number of NaT Dates:", df["Date"].isna().sum())
