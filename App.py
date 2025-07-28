@@ -223,27 +223,44 @@ for player in players:
                 else:
                     flag_val = current_sum
 
-                weekly_avg = player_data[
-                    (player_data["Session Type"] == "Training Session")
-                ].groupby("Week")[metric].sum().mean()
+                # Get ISO week and year of the current week
+iso_current = latest_training_date.isocalendar()
+current_week = iso_current.week
+current_year = iso_current.year
 
-                if weekly_avg > 0 and flag_val > 1.10 * weekly_avg:
-                    flag = "⚠️" if thursday_done else "🔮⚠️"
+# Get previous week (handling wrap around new year)
+if current_week == 1:
+    prev_week = 52
+    prev_year = current_year - 1
+else:
+    prev_week = current_week - 1
+    prev_year = current_year
+
+# Filter for previous week's data
+player_data["Year"] = player_data["Date"].dt.isocalendar().year
+previous_week_data = player_data[
+    (player_data["Session Type"] == "Training Session") &
+    (player_data["Date"].dt.isocalendar().week == prev_week) &
+    (player_data["Date"].dt.isocalendar().year == prev_year)
+]
+
+# Sum metric for previous week
+previous_week_total = previous_week_data[metric].sum()
+
+if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
+                flag = "⚠️" if thursday_done else "🔮⚠️"
 
                 st.markdown(
                     f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f} {flag}</div>",
                     unsafe_allow_html=True
                 )
 
-                # === DEBUG INFO ===
-                st.markdown(f"""
-                <div style='font-size:14px; color:#555;'>
-                    <b>Debug for {label}</b><br>
-                    • Weekly Avg: {weekly_avg:.1f}<br>
-                    • Current Sum: {current_sum:.1f}<br>
-                    • Projected Total: {projected_total if not thursday_done else 'N/A'}<br>
-                    • Final Used: {flag_val:.1f}<br>
-                    • Threshold (110%): {1.10 * weekly_avg:.1f}<br>
-                    • ⚠️ Flag: {'YES' if flag else 'NO'}
-                </div>
-                """, unsafe_allow_html=True)
+                debug_lines = [
+    f"<b>📊 Flag Debug for {label}:</b>",
+    f"• Previous Week Total: {previous_week_total:.1f}",
+    f"• Current Week Total: {current_sum:.1f}",
+    f"• Projected Week Total: {projected_total:.1f}",
+    f"• Value Used: {'Actual' if thursday_done else 'Projected'} = {flag_val:.1f}",
+    f"• Threshold (110%): {(1.10 * previous_week_total):.1f}",
+    f"• ⚠️ Flag: {'YES' if flag else 'NO'}"
+]
