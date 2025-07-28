@@ -158,13 +158,22 @@ for player in players:
     if matches.empty:
         continue
 
+    # ✅ FIXED: Force everyone into the global latest training week
+    iso_dates = player_data["Date"].dt.isocalendar()
     training_week = player_data[
         (player_data["Session Type"] == "Training Session") &
-        (player_data["Date"].apply(lambda d: d.isocalendar()[:2] == (iso_year, iso_week)))
+        (iso_dates.year == iso_year) &
+        (iso_dates.week == iso_week)
     ]
 
     if training_week.empty:
-        continue
+        # If player missed training, still create placeholder so gauges appear
+        training_week = pd.DataFrame([{
+            "Athlete Name": player,
+            "Date": latest_training_date,
+            "Duration (mins)": 0,
+            **{m: 0 for m in metrics}
+        }])
 
     match_avg = {}
     for m in metrics:
@@ -204,6 +213,7 @@ for player in players:
         with cols[i]:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
+
 
             flag = ""
             if metric != "Top Speed (kph)":
