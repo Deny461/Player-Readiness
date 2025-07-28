@@ -161,7 +161,7 @@ for player in players:
     if matches.empty:
         continue
 
-      # === Force Global Week for All Players ===
+    # === Force Global Week for All Players ===
     iso_vals_player = player_data["Date"].dt.isocalendar()
     training_week = player_data[
         (player_data["Session Type"] == "Training Session") &
@@ -169,7 +169,7 @@ for player in players:
         (iso_vals_player["year"] == iso_year)
     ]
 
-      # Ensure we always have a row for the global week
+    # Ensure we always have a row for the global week
     if training_week.empty:
         training_week = pd.DataFrame([{
             "Athlete Name": player,
@@ -229,6 +229,22 @@ for player in players:
     valid_players += 1
 
     for i, metric in enumerate(metrics):
+        label = metric_labels[metric]
+
+        # === Detect if this is a dummy "no practice" week ===
+        no_training_this_week = training_week["Duration (mins)"].sum() == 0
+
+        if no_training_this_week:
+            train_val = 0
+            benchmark = match_avg.get(metric, None) if metric != "Top Speed (kph)" else top_speed_benchmark
+            fig = create_readiness_gauge(train_val, benchmark, label)
+            with cols[i]:
+                st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
+                st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
+                st.markdown(f"<div style='font-size:14px; color:#777;'>No training this week → gauges set to 0.</div>", unsafe_allow_html=True)
+            continue  # Skip flagging entirely for this metric
+
+        # === Normal gauge + flag logic ===
         if metric == "Top Speed (kph)":
             train_val = grouped_trainings[metric].max()
             benchmark = top_speed_benchmark
@@ -236,14 +252,13 @@ for player in players:
             train_val = grouped_trainings[metric].sum()
             benchmark = match_avg.get(metric, None)
 
-        label = metric_labels[metric]
         fig = create_readiness_gauge(train_val, benchmark, label)
 
         with cols[i]:
             st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-            # === Flagging === (skip for Top Speed)
+            # === Flagging (skip for Top Speed) ===
             if metric != "Top Speed (kph)":
                 flag = ""
                 training_week_sorted = training_week.sort_values("Date").copy()
