@@ -189,8 +189,8 @@ if metric != "Top Speed (kph)":
             flag_val = current_sum
             projection_used = False
 
-        if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
-            flag = "🔮⚠️" if projection_used else "⚠️"
+            if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
+                flag = "🔮⚠️" if projection_used else "⚠️"
 
             # Debug Info
             st.markdown(f"""
