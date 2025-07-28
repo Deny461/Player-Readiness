@@ -279,3 +279,17 @@ if metric != "Top Speed (kph)" and benchmark and benchmark > 0:
     f"<div style='text-align: center; font-size: 14px; color: gray;'>{train_val:.1f} / {benchmark:.1f} = {train_val / benchmark:.2f} {flag}</div>",
     unsafe_allow_html=True
 )
+# === 🐞 Debug Info for Flag Calculations ===
+if metric != "Top Speed (kph)" and benchmark and benchmark > 0:
+    debug_msg = f"""
+    <div style='font-size:13px; color:#666; margin-top:4px;'>
+    <b>📊 Flag Debug – {label}:</b><br>
+    • Weekly Avg: {weekly_avg:.1f}<br>
+    • Current Sum: {current_sum:.1f}<br>
+    • Projected Total: {projected_total:.1f} (based on Tue–Thu avg)<br>
+    • Using: {"Actual" if thursday_done else "Projected"} ({flag_val:.1f})<br>
+    • Threshold: {1.10 * weekly_avg:.1f}<br>
+    • Flag: {flag}
+    </div>
+    """
+    st.markdown(debug_msg, unsafe_allow_html=True)
