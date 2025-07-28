@@ -273,7 +273,7 @@ else:
 
             # Debug Info
     st.markdown(f"""
-            <div style='font-size:14px; color:#555;'>
+        <div style='font-size:14px; color:#555;'>
                 <b>Debug for {label}</b><br>
                 • Previous Week Total: {previous_week_total:.1f}<br>
                 • Current Week So Far: {current_sum:.1f}<br>
@@ -283,5 +283,5 @@ else:
                 • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
                 • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
                 • ⚠️ Flag: {'YES' if flag else 'NO'}
-            </div>
+        </div>
             """, unsafe_allow_html=True)
