@@ -255,7 +255,14 @@ if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
                     unsafe_allow_html=True
                 )
 
-if metric != "Top Speed (kph)":
+with cols[i]:
+    st.markdown(f"<div style='text-align: center; font-weight: bold;'>{label}</div>", unsafe_allow_html=True)
+    st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
+
+    flag = ""
+    # (flag calculation code)
+
+    # ⬇️ PLACE THIS INSIDE cols[i]
     try:
         debug_lines = [
             f"<b>📊 Flag Debug for {label}:</b>",
