@@ -202,33 +202,35 @@ for player in players:
     
 
     # Skip players with no valid sessions
+    # Skip players with no valid sessions
     if grouped_trainings.empty:
         continue
+
     # === DEBUG BLOCK: Inspect training week logic ===
-st.markdown(f"<hr><h4>🧪 Debug Info – {player}</h4>", unsafe_allow_html=True)
+    st.markdown(f"<hr><h4>🧪 Debug Info – {player}</h4>", unsafe_allow_html=True)
 
-# Print match cutoff and training block end
-st.markdown(f"""
-<ul style='font-size:16px;'>
-  <li>📅 <strong>Match Cutoff Date:</strong> {match_cutoff_date.date()}</li>
-  <li>📅 <strong>Training Block End:</strong> {training_block_end.date()}</li>
-  <li>📊 <strong>Training Sessions Found:</strong> {len(training_week)}</li>
-</ul>
-""", unsafe_allow_html=True)
+    # Print match cutoff and training block end
+    st.markdown(f"""
+    <ul style='font-size:16px;'>
+      <li>📅 <strong>Match Cutoff Date:</strong> {match_cutoff_date.date()}</li>
+      <li>📅 <strong>Training Block End:</strong> {training_block_end.date()}</li>
+      <li>📊 <strong>Training Sessions Found:</strong> {len(training_week)}</li>
+    </ul>
+    """, unsafe_allow_html=True)
 
-# Ensure training_week metrics are numeric
-for m in metrics:
-    training_week[m] = pd.to_numeric(training_week[m], errors="coerce")
+    # Ensure training_week metrics are numeric
+    for m in metrics:
+        training_week[m] = pd.to_numeric(training_week[m], errors="coerce")
 
-# Preview the actual training week rows if available
-if not training_week.empty:
-    st.markdown("**📋 Training Week Data Preview:**")
-    preview_cols = ["Date", "Session Type"] + metrics
-    st.dataframe(training_week[preview_cols].sort_values("Date"), use_container_width=True)
-else:
-    st.warning("⚠️ No training sessions found in the window.")
+    # Preview the actual training week rows if available
+    if not training_week.empty:
+        st.markdown("**📋 Training Week Data Preview:**")
+        preview_cols = ["Date", "Session Type"] + metrics
+        st.dataframe(training_week[preview_cols].sort_values("Date"), use_container_width=True)
+    else:
+        st.warning("⚠️ No training sessions found in the window.")
 
-
+    # === PLAYER GAUGES ===
     st.markdown(f"### {player}")
     cols = st.columns(len(metrics))
     valid_players += 1
