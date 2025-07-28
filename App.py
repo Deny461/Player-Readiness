@@ -147,8 +147,9 @@ for player in players:
     if matches.empty:
         continue
 
-    latest_match = matches.iloc[-1]
-    match_cutoff_date = latest_match["Date"]
+    latest_training = player_data[player_data["Session Type"] == "Training Session"].sort_values("Date").iloc[-1]
+    training_block_end = latest_training["Date"]
+    match_cutoff_date = training_block_end - timedelta(days=6)
     match_games = matches[matches["Date"] <= match_cutoff_date]
     match_games = match_games[match_games["Duration (mins)"] > 0]
 
