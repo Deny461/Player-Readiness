@@ -261,17 +261,17 @@ for player in players:
                         else:
                             flag = ""
 
-try:
-    st.markdown(f"""
-    <div style='font-size:14px; color:#555;'>
-        <b>Debug for {label}</b><br>
-        • Previous Week Total: {previous_week_total:.1f}<br>
-        • Current Sum: {current_sum:.1f}<br>
-        • Projected Total: {projected_total if not thursday_done else 'N/A'}<br>
-        • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
-        • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
-        • ⚠️ Flag: {'YES' if flag else 'NO'}
-    </div>
-    """, unsafe_allow_html=True)
-except Exception as e:
-    st.markdown(f"<div style='color:red;'>Debug Error: {e}</div>", unsafe_allow_html=True)
+                try:
+                    st.markdown(f"""
+                    <div style='font-size:14px; color:#555;'>
+                        <b>Debug for {label}</b><br>
+                        • Previous Week Total: {previous_week_total:.1f}<br>
+                        • Current Sum: {current_sum:.1f}<br>
+                        • Projected Total: {projected_total if not thursday_done else 'N/A'}<br>
+                        • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
+                        • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
+                        • ⚠️ Flag: {'YES' if flag else 'NO'}
+                    </div>
+                    """, unsafe_allow_html=True)
+                except Exception as e:
+                    st.markdown(f"<div style='color:red;'>Debug Error: {e}</div>", unsafe_allow_html=True)
