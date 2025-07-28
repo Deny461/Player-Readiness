@@ -161,10 +161,24 @@ for player in players:
     if matches.empty:
         continue
 
+        # Force ALL players to use the global latest week
     training_week = player_data[
         (player_data["Session Type"] == "Training Session") &
-        (player_data["Date"].apply(lambda d: d.isocalendar()[:2] == (iso_year, iso_week)))
+        (player_data["Date"].dt.isocalendar().week == iso_week) &
+        (player_data["Date"].dt.isocalendar().year == iso_year)
     ]
+
+    # If the player had no training that week, show 0s instead of skipping
+    if training_week.empty:
+        training_week = pd.DataFrame([{
+            "Distance (m)": 0,
+            "High Intensity Running (m)": 0,
+            "Sprint Distance (m)": 0,
+            "No. of Sprints": 0,
+            "Top Speed (kph)": 0,
+            "Date": latest_training_date
+        }])
+
 
     if training_week.empty:
         continue
