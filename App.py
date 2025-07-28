@@ -192,17 +192,17 @@ if metric != "Top Speed (kph)":
         if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
             flag = "🔮⚠️" if projection_used else "⚠️"
 
-    # Debug Info
-    st.markdown(f"""
-    <div style='font-size:14px; color:#555;'>
-        <b>Debug for {metric_labels[metric]}</b><br>
-        • Previous Week Total: {previous_week_total:.1f}<br>
-        • Current Week So Far: {current_sum:.1f}<br>
-        • Practices Done: {practices_done}<br>
-        • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
-        • Projected Total: {projected_total if projection_used else 'N/A'}<br>
-        • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
-        • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
-        • ⚠️ Flag: {'YES' if flag else 'NO'}
-    </div>
-    """, unsafe_allow_html=True)
+            # Debug Info
+            st.markdown(f"""
+            <div style='font-size:14px; color:#555;'>
+                <b>Debug for {metric_labels[metric]}</b><br>
+                • Previous Week Total: {previous_week_total:.1f}<br>
+                • Current Week So Far: {current_sum:.1f}<br>
+                • Practices Done: {practices_done}<br>
+                • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
+                • Projected Total: {projected_total if projection_used else 'N/A'}<br>
+                • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
+                • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
+                • ⚠️ Flag: {'YES' if flag else 'NO'}
+            </div>
+            """, unsafe_allow_html=True)
