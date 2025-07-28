@@ -245,35 +245,28 @@ for player in players:
                 .reindex([1, 2, 3], fill_value=0)
             )
 
-            if metric != "Top Speed (kph)":
-                if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
-                    flag = "⚠️"
-        flag_val = current_sum
-        projection_used = False
-        projected_total = "N/A"
-    else:
-        if practices_done < 3:
-            needed_practices = [p for p in range(practices_done + 1, 4)]
-            projected_total = current_sum + practice_avgs.loc[needed_practices].sum()
-            flag_val = projected_total
-            projection_used = True
-        else:
-            projected_total = "N/A"
-            flag_val = current_sum
-            projection_used = False
+            if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
+                flag = "⚠️"
+                flag_val = current_sum
+                projection_used = False
+                projected_total = "N/A"
+            else:
+                if practices_done < 3:
+                    needed_practices = [p for p in range(practices_done + 1, 4)]
+                    projected_total = current_sum + practice_avgs.loc[needed_practices].sum()
+                    flag_val = projected_total
+                    projection_used = True
+                else:
+                    projected_total = "N/A"
+                    flag_val = current_sum
+                    projection_used = False
 
-        if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
-            flag = "🔮⚠️" if projection_used else "⚠️"
-        else:
-    # For Top Speed — no flagging/projection, just report current week vs benchmark
-            flag = ""
-            flag_val = train_val
-            projected_total = "N/A"
-            projection_used = False
+                if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
+                    flag = "🔮⚠️" if projection_used else "⚠️"
 
             # Debug Info
-    st.markdown(f"""
-        <div style='font-size:14px; color:#555;'>
+            st.markdown(f"""
+            <div style='font-size:14px; color:#555;'>
                 <b>Debug for {label}</b><br>
                 • Previous Week Total: {previous_week_total:.1f}<br>
                 • Current Week So Far: {current_sum:.1f}<br>
@@ -283,5 +276,5 @@ for player in players:
                 • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
                 • Threshold (110%): {1.10 * previous_week_total:.1f}<br>
                 • ⚠️ Flag: {'YES' if flag else 'NO'}
-        </div>
+            </div>
             """, unsafe_allow_html=True)
