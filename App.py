@@ -207,11 +207,19 @@ for player in players:
 
             flag = ""
             if metric != "Top Speed (kph)":
-                # Count practices done this week
-                training_week = training_week.sort_values("Date")
-                training_week["PracticeNumber"] = training_week.groupby(["Week"]).cumcount() + 1
-                practices_done = training_week["PracticeNumber"].max()
+                # Add Year/Week columns (needed for grouping)
+                training_week = training_week.sort_values("Date").copy()
+                iso_vals = training_week["Date"].dt.isocalendar()
+                training_week["Year"] = iso_vals.year
+                training_week["Week"] = iso_vals.week
 
+                # Assign PracticeNumber capped at 3
+                training_week["PracticeNumber"] = training_week.groupby(
+                    ["Year", "Week"]
+                ).cumcount() + 1
+                training_week.loc[training_week["PracticeNumber"] > 3, "PracticeNumber"] = 3
+
+                practices_done = training_week["PracticeNumber"].max()
                 current_sum = training_week[metric].sum()
 
                 # === Previous Week Data ===
@@ -229,8 +237,11 @@ for player in players:
                 ]
                 previous_week_total = previous_week_data[metric].sum()
 
-                # === Build historical averages for Practice 1, 2, 3 ===
-                player_data = player_data.sort_values("Date")
+                # === Build historical averages for Practice 1–3 ===
+                player_data = player_data.sort_values("Date").copy()
+                iso_vals_all = player_data["Date"].dt.isocalendar()
+                player_data["Year"] = iso_vals_all.year
+                player_data["Week"] = iso_vals_all.week
                 player_data["PracticeNumber"] = (
                     player_data[player_data["Session Type"] == "Training Session"]
                     .groupby(["Year", "Week"]).cumcount() + 1
@@ -242,16 +253,14 @@ for player in players:
                     .groupby("PracticeNumber")[metric].mean()
                 )
 
-                # === Decide Flag & Projection ===
+                # === Flagging Logic ===
                 if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
-                    # Already exceeded threshold — no projection needed
                     flag = "⚠️"
                     flag_val = current_sum
                     projection_used = False
                     projected_total = "N/A"
                 else:
                     if practices_done < 3:
-                        # Project remaining practices up to 3
                         needed_practices = [p for p in range(practices_done + 1, 4)]
                         projected_total = current_sum + practice_avgs.loc[needed_practices].sum()
                         flag_val = projected_total
