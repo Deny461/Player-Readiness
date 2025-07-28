@@ -289,3 +289,7 @@ for player in players:
                     • ⚠️ Flag: {'YES' if flag else 'NO'}
                 </div>
                 """, unsafe_allow_html=True)
+
+st.write("Unique Session Types:", df["Session Type"].unique())
+st.write("Sample Dates:", df["Date"].dropna().head(10))
+st.write("Number of NaT Dates:", df["Date"].isna().sum())
