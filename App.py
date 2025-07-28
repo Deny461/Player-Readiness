@@ -293,3 +293,10 @@ if metric != "Top Speed (kph)" and benchmark and benchmark > 0:
     </div>
     """
     st.markdown(debug_msg, unsafe_allow_html=True)
+
+    st.markdown(
+        f"<div style='font-size:13px; color:#888;'>Weekday Avgs: " +
+        ", ".join([f"{day}: {weekday_avgs.get(day, 0):.1f}" for day in ["Tuesday", "Wednesday", "Thursday"]]) +
+        "</div>",
+        unsafe_allow_html=True
+    )
