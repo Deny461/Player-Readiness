@@ -5,7 +5,7 @@ import os
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="Performance Dashboard",
+    page_title="Player Readiness",
     page_icon="BostonBoltsLogo.png",
     layout="wide"
 )
@@ -22,7 +22,7 @@ with st.container():
 
 # === TITLE ===
 with st.container():
-    st.markdown("<h1 style='text-align:center;font-size:72px;margin-top:-60px;'>Performance Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;font-size:72px;margin-top:-60px;'>Player Readiness</h1>", unsafe_allow_html=True)
 
 # === CSV Loader ===
 @st.cache_data
@@ -34,23 +34,51 @@ def load_data(file):
     return df
 
 # === Session Control ===
-if "page" not in st.session_state:
-    st.session_state.page = "Home"
-
-page_choice = st.selectbox("Choose Page", ["Player Readiness", "ACWR"])
-
+if "proceed" not in st.session_state: 
+    st.session_state.proceed = False
 available_teams = ["U15 MLS Next","U16 MLS Next","U17 MLS Next","U19 MLS Next",
                    "U15 MLS Next 2","U16 MLS Next 2","U17 MLS Next 2","U19 MLS Next 2"]
 selected_team = st.selectbox("Select Team", available_teams)
 
+col_spacer, colA, colB, col_spacer2 = st.columns([0.0001,0.1,1.5,1])
+with colA:
+    if st.button("Continue"): 
+        st.session_state.proceed = True
+        st.rerun()
+with colB:
+    if st.button("Back"): 
+        st.session_state.proceed = False
+        st.rerun()
+if not st.session_state.proceed: 
+    st.stop()
+
+# === Load Data ===
 filename = f"Player Data/{selected_team}_PD_Data.csv"
-if not os.path.exists(filename):
+if not os.path.exists(filename): 
     st.error(f"File {filename} not found.")
     st.stop()
 
 df = load_data(filename)
 df = df.dropna(subset=["Date","Session Type","Athlete Name","Segment Name"])
 df = df[df["Segment Name"]=="Whole Session"].sort_values("Date")
+
+# === Latest Match and Training Anchors ===
+match_df = df[df["Session Type"]=="Match Session"]
+if match_df.empty: 
+    st.markdown("**Latest Match Date Used:** _None found_")
+    st.stop()
+
+latest_match_date = match_df["Date"].max()
+st.markdown(f"**Latest Match Date Used:** `{latest_match_date.date()}`")
+
+training_df = df[df["Session Type"]=="Training Session"]
+if training_df.empty:
+    st.warning("No training sessions found in dataset.")
+    st.stop()
+
+latest_training_date = training_df["Date"].max()
+iso_year, iso_week, _ = latest_training_date.isocalendar()
+st.markdown(f"🌐 Global Latest Training Date: {latest_training_date.date()}")
 
 # === Metrics ===
 metrics = ["Distance (m)","High Intensity Running (m)","Sprint Distance (m)",
@@ -90,107 +118,139 @@ def create_readiness_gauge(value, benchmark, label):
     fig.update_layout(margin=dict(t=10,b=10,l=10,r=10), height=180)
     return fig
 
-# === Player Readiness Page ===
-if page_choice == "Player Readiness":
-    match_df = df[df["Session Type"]=="Match Session"]
-    if match_df.empty: 
-        st.markdown("**Latest Match Date Used:** _None found_")
-        st.stop()
+# === Loop Players ===
+players = sorted(df["Athlete Name"].dropna().unique())
+for player in players:
+    player_data = df[df["Athlete Name"]==player].copy()
+    player_data["Duration (mins)"] = pd.to_numeric(player_data["Duration (mins)"], errors="coerce")
+    for m in metrics: 
+        player_data[m] = pd.to_numeric(player_data[m], errors="coerce")
 
-    latest_match_date = match_df["Date"].max()
-    st.markdown(f"**Latest Match Date Used:** `{latest_match_date.date()}`")
+    # Matches before latest training
+    matches = player_data[(player_data["Session Type"]=="Match Session") &
+                          (player_data["Date"]<=latest_match_date) &
+                          (player_data["Duration (mins)"]>0)].sort_values("Date")
+    if matches.empty: 
+        continue
 
-    training_df = df[df["Session Type"]=="Training Session"]
-    if training_df.empty:
-        st.warning("No training sessions found in dataset.")
-        st.stop()
+    # Training in global latest training week
+    iso_vals = player_data["Date"].dt.isocalendar()
+    training_week = player_data[(player_data["Session Type"]=="Training Session") &
+                                (iso_vals["week"]==iso_week) &
+                                (iso_vals["year"]==iso_year)]
+    if training_week.empty:
+        training_week = pd.DataFrame([{
+            "Athlete Name":player,"Date":latest_training_date,"Session Type":"Training Session",
+            "Segment Name":"Whole Session","Distance (m)":0,"High Intensity Running (m)":0,
+            "Sprint Distance (m)":0,"No. of Sprints":0,"Top Speed (kph)":0,"Duration (mins)":0
+        }])
 
-    latest_training_date = training_df["Date"].max()
-    iso_year, iso_week, _ = latest_training_date.isocalendar()
-    st.markdown(f"🌐 Global Latest Training Date: {latest_training_date.date()}")
+    # Find most recent previous training week with data
+    prev_training = player_data[(player_data["Session Type"]=="Training Session") &
+                                (player_data["Date"]<training_week["Date"].min())]
+     # Find most recent previous training week with actual data (>0 load)
+    prev_training = player_data[
+        (player_data["Session Type"]=="Training Session") &
+        (player_data["Date"]<training_week["Date"].min())
+    ]
 
-    players = sorted(df["Athlete Name"].dropna().unique())
-    for player in players:
-        player_data = df[df["Athlete Name"]==player].copy()
-        player_data["Duration (mins)"] = pd.to_numeric(player_data["Duration (mins)"], errors="coerce")
-        for m in metrics: 
-            player_data[m] = pd.to_numeric(player_data[m], errors="coerce")
+    if not prev_training.empty:
+        # Group by ISO week/year to filter out 0-load weeks
+        prev_training['Year'] = prev_training['Date'].dt.isocalendar().year
+        prev_training['Week'] = prev_training['Date'].dt.isocalendar().week
+        week_sums = prev_training.groupby(['Year','Week'])[metrics].sum().reset_index()
 
-        matches = player_data[(player_data["Session Type"]=="Match Session") &
-                              (player_data["Date"]<=latest_match_date) &
-                              (player_data["Duration (mins)"]>0)].sort_values("Date")
-        if matches.empty: continue
+        # Only keep weeks with non-zero totals
+        valid_weeks = week_sums[(week_sums.drop(columns=['Year','Week']) > 0).any(axis=1)]
 
-        iso_vals = player_data["Date"].dt.isocalendar()
-        training_week = player_data[(player_data["Session Type"]=="Training Session") &
-                                    (iso_vals["week"]==iso_week) &
-                                    (iso_vals["year"]==iso_year)]
-        if training_week.empty:
-            training_week = pd.DataFrame([{
-                "Athlete Name":player,"Date":latest_training_date,"Session Type":"Training Session",
-                "Segment Name":"Whole Session","Distance (m)":0,"High Intensity Running (m)":0,
-                "Sprint Distance (m)":0,"No. of Sprints":0,"Top Speed (kph)":0,"Duration (mins)":0
-            }])
+        if not valid_weeks.empty:
+            last_valid = valid_weeks.iloc[-1]  # most recent non-zero week
+            prev_week_str = f"Week {int(last_valid['Week'])}, {int(last_valid['Year'])}"
+            previous_week_data = prev_training[
+                (prev_training['Date'].dt.isocalendar().week == last_valid['Week']) &
+                (prev_training['Date'].dt.isocalendar().year == last_valid['Year'])
+            ]
+            previous_week_total_map = {
+                m: previous_week_data[m].sum() for m in metrics if m!="Top Speed (kph)"
+            }
+        else:
+            prev_week_str="None"
+            previous_week_total_map={m:0 for m in metrics if m!="Top Speed (kph)"}
+    else:
+        prev_week_str="None"
+        previous_week_total_map={m:0 for m in metrics if m!="Top Speed (kph)"}
 
-        match_avg = {}
-        for m in metrics:
-            if m!="Top Speed (kph)":
-                matches["Per90"] = matches[m]/matches["Duration (mins)"]*90
-                match_avg[m] = matches["Per90"].mean()
+    # Match averages per90 (exclude Top Speed)
+    match_avg = {}
+    for m in metrics:
+        if m!="Top Speed (kph)":
+            matches["Per90"] = matches[m]/matches["Duration (mins)"]*90
+            match_avg[m] = matches["Per90"].mean()
 
-        top_speed_benchmark = player_data["Top Speed (kph)"].max()
-        grouped_trainings = training_week.agg({
-            "Distance (m)":"sum","High Intensity Running (m)":"sum",
-            "Sprint Distance (m)":"sum","No. of Sprints":"sum","Top Speed (kph)":"max"
-        }).to_frame().T
+    top_speed_benchmark = player_data["Top Speed (kph)"].max()
+    grouped_trainings = training_week.agg({
+        "Distance (m)":"sum","High Intensity Running (m)":"sum",
+        "Sprint Distance (m)":"sum","No. of Sprints":"sum","Top Speed (kph)":"max"
+    }).to_frame().T
 
-        st.markdown(f"### {player}")
-        cols = st.columns(len(metrics))
-        for i,metric in enumerate(metrics):
-            if metric=="Top Speed (kph)":
-                train_val=grouped_trainings[metric].max()
-                benchmark=top_speed_benchmark
-            else:
-                train_val=grouped_trainings[metric].sum()
-                benchmark=match_avg.get(metric,None)
+    st.markdown(f"### {player}")
+    cols = st.columns(len(metrics))
+    for i,metric in enumerate(metrics):
+        if metric=="Top Speed (kph)":
+            train_val=grouped_trainings[metric].max()
+            benchmark=top_speed_benchmark
+        else:
+            train_val=grouped_trainings[metric].sum()
+            benchmark=match_avg.get(metric,None)
 
-            fig=create_readiness_gauge(train_val,benchmark,metric_labels[metric])
-            with cols[i]:
-                st.markdown(f"<div style='text-align:center;font-weight:bold;'>{metric_labels[metric]}</div>",unsafe_allow_html=True)
-                st.plotly_chart(fig,use_container_width=True,key=f"{player}-{metric}")
+        fig=create_readiness_gauge(train_val,benchmark,metric_labels[metric])
+        with cols[i]:
+            st.markdown(f"<div style='text-align:center;font-weight:bold;'>{metric_labels[metric]}</div>",unsafe_allow_html=True)
+            st.plotly_chart(fig,use_container_width=True,key=f"{player}-{metric}")
 
-# === ACWR Page ===
-if page_choice == "ACWR":
-    st.subheader("ACWR Dashboard")
-    players = sorted(df["Athlete Name"].dropna().unique())
-    for player in players:
-        player_data = df[df["Athlete Name"]==player].copy()
-        player_data["Date"] = pd.to_datetime(player_data["Date"])
-        player_data = player_data.sort_values("Date")
-        for m in metrics: 
-            player_data[m] = pd.to_numeric(player_data[m], errors="coerce")
+            if metric!="Top Speed (kph)":
+                practices_done=training_week.shape[0]
+                current_sum=training_week[metric].sum()
+                previous_week_total=previous_week_total_map.get(metric,0)
 
-        # ACWR calc: acute = last 7 days, chronic = last 28 days
-        acwr_data = []
-        for date in player_data["Date"].unique():
-            acute_window = player_data[(player_data["Date"]<=date) & (player_data["Date"]>date-pd.Timedelta(days=7))]
-            chronic_window = player_data[(player_data["Date"]<=date) & (player_data["Date"]>date-pd.Timedelta(days=28))]
-            ratios = {}
-            for m in metrics:
-                acute = acute_window[m].sum()
-                chronic = chronic_window[m].sum()/4 if len(chronic_window)>0 else 0
-                ratios[m] = acute/chronic if chronic>0 else 0
-            acwr_data.append({"Date":date, **ratios})
-        acwr_df = pd.DataFrame(acwr_data)
+                # Historical Averages
+                iso_vals_all=player_data["Date"].dt.isocalendar()
+                player_data["PracticeNumber"] = (
+                    player_data[player_data["Session Type"]=="Training Session"]
+                    .groupby([iso_vals_all.year, iso_vals_all.week])
+                    .cumcount()+1
+                ).clip(upper=3)
+                practice_avgs = (
+                    player_data[player_data["Session Type"]=="Training Session"]
+                    .groupby("PracticeNumber")[metric].mean()
+                    .reindex([1,2,3], fill_value=0)
+                )
 
-        # Line chart with zones
-        fig = go.Figure()
-        for m in metrics:
-            fig.add_trace(go.Scatter(x=acwr_df["Date"], y=acwr_df[m], mode="lines+markers", name=metric_labels[m]))
-        # Add zones
-        fig.add_hrect(y0=0, y1=0.8, fillcolor="red", opacity=0.2, line_width=0, annotation_text="Undertrained", annotation_position="top left")
-        fig.add_hrect(y0=0.8, y1=1.3, fillcolor="green", opacity=0.2, line_width=0, annotation_text="Optimal", annotation_position="top left")
-        fig.add_hrect(y0=1.3, y1=3, fillcolor="orange", opacity=0.2, line_width=0, annotation_text="Overtrained", annotation_position="top left")
+                # Flagging logic
+                if previous_week_total>0 and current_sum>1.10*previous_week_total:
+                    flag="⚠️"; flag_val=current_sum; projection_used=False; projected_total="N/A"
+                else:
+                    if practices_done<3:
+                        needed_practices=[p for p in range(practices_done+1,4)]
+                        projected_total=current_sum+practice_avgs.loc[needed_practices].sum()
+                        flag_val=projected_total; projection_used=True
+                    else:
+                        projected_total="N/A"; flag_val=current_sum; projection_used=False
+                    if previous_week_total>0 and flag_val>1.10*previous_week_total:
+                        flag="🔮⚠️" if projection_used else "⚠️"
+                    else: flag=""
 
-        fig.update_layout(title=f"{player} - ACWR", yaxis_title="ACWR", xaxis_title="Date", height=400)
-        st.plotly_chart(fig, use_container_width=True)
+                st.markdown(f"""
+                <div style='font-size:14px;color:#555;'>
+                    <b>Debug for {metric_labels[metric]}</b><br>
+                    • Previous Week Used: {prev_week_str}<br>
+                    • Previous Week Total: {previous_week_total:.1f}<br>
+                    • Current Week So Far: {current_sum:.1f}<br>
+                    • Practices Done: {practices_done}<br>
+                    • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
+                    • Projected Total: {projected_total if projection_used else 'N/A'}<br>
+                    • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
+                    • Threshold (110%): {1.10*previous_week_total:.1f}<br>
+                    • ⚠️ Flag: {'YES' if flag else 'NO'}
+                </div>
+                """, unsafe_allow_html=True)
