@@ -281,3 +281,24 @@ for player in players:
                     • ⚠️ Flag: {'YES' if flag else 'NO'}
                 </div>
                 """, unsafe_allow_html=True)
+
+    # === ACWR DASHBOARD ===
+if st.session_state.page == "ACWR Dashboard":
+    if st.button("⬅ Back", key="acwr_back"):
+        st.session_state.page = "Home"
+        st.rerun()
+
+    st.markdown("## ACWR Dashboard")
+
+    st.info("This ACWR dashboard is under development 🚧")
+
+    # Placeholder structure for future ACWR charts
+    st.markdown("### Coming Soon: Acute:Chronic Workload Ratio Charts")
+    st.write("Here you’ll be able to view ACWR metrics across Distance, HSR, Sprint Distance, and Number of Sprints for each player.")
+
+    # Example placeholder with columns for layout
+    cols = st.columns(2)
+    with cols[0]:
+        st.metric("Example Player", "1.2", "ACWR")
+    with cols[1]:
+        st.metric("Threshold", "0.8 - 1.3", "Optimal Zone")
