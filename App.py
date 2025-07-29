@@ -66,7 +66,7 @@ if st.session_state.page == "Player Gauges Dashboard":
         st.stop()
 
     # Show Select Dashboard button
-    if st.button("⬅ Select Dashboard", key="gauges_back"):
+    if st.button("Select Dashboard", key="gauges_back"):
         st.session_state.page = "Home"
         st.session_state.proceed = False
         st.rerun()
@@ -305,19 +305,22 @@ if st.session_state.page == "Player Gauges Dashboard":
     
 # === ACWR DASHBOARD ===
 if st.session_state.page == "ACWR Dashboard":
-    if st.button("⬅ Back", key="acwr_back_unique"):
-        st.session_state.page = "Home"
-        st.rerun()
     st.markdown("## ACWR Dashboard")
+
+    if not st.session_state.proceed:
+        available_teams = ["U15 MLS Next","U16 MLS Next","U17 MLS Next","U19 MLS Next",
+                           "U15 MLS Next 2","U16 MLS Next 2","U17 MLS Next 2","U19 MLS Next 2"]
+        selected_team = st.selectbox("Select Team", available_teams, key="team_select_acwr")
+
+        if st.button("Continue", key="acwr_continue"):
+            st.session_state.proceed = True
+            st.session_state.selected_team = selected_team
+            st.rerun()
+        st.stop()
+
+    if st.button("⬅ Select Dashboard", key="acwr_back"):
+        st.session_state.page = "Home"
+        st.session_state.proceed = False
+        st.rerun()
+
     st.info("This ACWR dashboard is under development 🚧")
-
-    # Placeholder structure for future ACWR charts
-    st.markdown("### Coming Soon: Acute:Chronic Workload Ratio Charts")
-    st.write("Here you’ll be able to view ACWR metrics across Distance, HSR, Sprint Distance, and Number of Sprints for each player.")
-
-    # Example placeholder with columns for layout
-    cols = st.columns(2)
-    with cols[0]:
-        st.metric("Example Player", "1.2", "ACWR")
-    with cols[1]:
-        st.metric("Threshold", "0.8 - 1.3", "Optimal Zone")
