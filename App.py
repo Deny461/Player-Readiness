@@ -44,9 +44,9 @@ if st.session_state.page == "Home":
     st.stop()
 
 # === PLAYER GAUGES DASHBOARD ===
-if st.session_state.page == "Player Gauges Dashboard":
-    if st.button("⬅ Back"):
-        st.session_state.page = "Home"
+    if st.session_state.page == "Player Gauges Dashboard":
+        if st.button("⬅ Back"):
+            st.session_state.page = "Home"
         st.rerun()
 
     st.markdown("## Player Gauges Dashboard")
