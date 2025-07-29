@@ -50,7 +50,7 @@ if st.session_state.page == "Player Gauges Dashboard":
         st.rerun()
 
     st.markdown("## Player Gauges Dashboard")
-    
+
 # === CSV Loader ===
 @st.cache_data
 def load_data(file):
@@ -281,3 +281,11 @@ for player in players:
                     • ⚠️ Flag: {'YES' if flag else 'NO'}
                 </div>
                 """, unsafe_allow_html=True)
+# === ACWR DASHBOARD (PLACEHOLDER) ===
+if st.session_state.page == "ACWR Dashboard":
+    if st.button("⬅ Back"):
+        st.session_state.page = "Home"
+        st.rerun()
+
+    st.markdown("## ACWR Dashboard (Coming Soon 🚧)")
+    st.info("This section is under construction. Please check back later.")
