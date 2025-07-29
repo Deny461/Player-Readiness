@@ -87,18 +87,6 @@ if st.session_state.page == "Player Gauges Dashboard":
                     "U15 MLS Next 2","U16 MLS Next 2","U17 MLS Next 2","U19 MLS Next 2"]
     selected_team = st.selectbox("Select Team", available_teams)
 
-    col_spacer, colA, colB, col_spacer2 = st.columns([0.0001,0.1,1.5,1])
-    with colA:
-        if st.button("Continue"): 
-            st.session_state.proceed = True
-            st.rerun()
-    with colB:
-        if st.button("Back"): 
-            st.session_state.proceed = False
-            st.rerun()
-    if not st.session_state.proceed: 
-        st.stop()
-
     # === Load Data ===
     filename = f"Player Data/{selected_team}_PD_Data.csv"
     if not os.path.exists(filename): 
