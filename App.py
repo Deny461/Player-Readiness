@@ -282,10 +282,10 @@ for player in players:
                 </div>
                 """, unsafe_allow_html=True)
 # === ACWR DASHBOARD (PLACEHOLDER) ===
-if st.session_state.page == "ACWR Dashboard":
-    if st.button("⬅ Back"):
-        st.session_state.page = "Home"
-        st.rerun()
+    if st.session_state.page == "ACWR Dashboard":
+        if st.button("⬅ Back"):
+            st.session_state.page = "Home"
+            st.rerun()
 
-        st.markdown("## ACWR Dashboard (Coming Soon 🚧)")
-        st.info("This section is under construction. Please check back later.")
+            st.markdown("## ACWR Dashboard (Coming Soon 🚧)")
+            st.info("This section is under construction. Please check back later.")
