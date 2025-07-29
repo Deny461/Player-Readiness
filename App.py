@@ -52,10 +52,24 @@ if st.session_state.page == "Home":
 
 # === PLAYER GAUGES DASHBOARD ===
 if st.session_state.page == "Player Gauges Dashboard":
-    if st.button("⬅ Back", key="gauges_back"):
-        st.session_state.page = "Home"
-        st.rerun()
     st.markdown("## Player Gauges Dashboard")
+
+    if not st.session_state.proceed:
+        available_teams = ["U15 MLS Next","U16 MLS Next","U17 MLS Next","U19 MLS Next",
+                           "U15 MLS Next 2","U16 MLS Next 2","U17 MLS Next 2","U19 MLS Next 2"]
+        selected_team = st.selectbox("Select Team", available_teams, key="team_select")
+
+        if st.button("Continue", key="team_continue"):
+            st.session_state.proceed = True
+            st.session_state.selected_team = selected_team
+            st.rerun()
+        st.stop()
+
+    # Show Select Dashboard button
+    if st.button("⬅ Select Dashboard", key="gauges_back"):
+        st.session_state.page = "Home"
+        st.session_state.proceed = False
+        st.rerun()
 
     # === CSV Loader ===
     @st.cache_data
