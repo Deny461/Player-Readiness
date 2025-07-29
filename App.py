@@ -10,12 +10,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# === Session State Initialization ===
-if "page" not in st.session_state:
-    st.session_state.page = "Home"
-
-if "proceed" not in st.session_state:
-    st.session_state.proceed = False
 # === LOGO HEADER ===
 with st.container():
     col1, col2, col3 = st.columns([0.05, 0.002, 0.52])
@@ -30,21 +24,15 @@ with st.container():
 with st.container():
     st.markdown("<h1 style='text-align:center;font-size:72px;margin-top:-60px;'>Player Readiness</h1>", unsafe_allow_html=True)
 
-# === Session Control ===
-if "proceed" not in st.session_state: 
+# === SESSION CONTROL ===
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
+
+# === Session State Initialization ===
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
+if "proceed" not in st.session_state:
     st.session_state.proceed = False
-
-available_teams = ["U15 MLS Next","U16 MLS Next","U17 MLS Next","U19 MLS Next",
-                   "U15 MLS Next 2","U16 MLS Next 2","U17 MLS Next 2","U19 MLS Next 2"]
-selected_team = st.selectbox("Select Team", available_teams, key="team_select")
-
-# Automatically proceed once a team is selected
-if selected_team:
-    st.session_state.proceed = True
-
-if not st.session_state.proceed:
-    st.stop()
-
 
 # === LANDING PAGE ===
 if st.session_state.page == "Home":
@@ -55,8 +43,9 @@ if st.session_state.page == "Home":
         ["Player Gauges Dashboard", "ACWR Dashboard"]
     )
 
-    if st.button("Continue"):
+    if st.button("Continue", key="dashboard_continue"):
         st.session_state.page = dashboard_choice
+        st.session_state.proceed = False  # reset team step
         st.rerun()
 
     st.stop()
