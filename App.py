@@ -287,5 +287,5 @@ if st.session_state.page == "ACWR Dashboard":
         st.session_state.page = "Home"
         st.rerun()
 
-    st.markdown("## ACWR Dashboard (Coming Soon 🚧)")
-    st.info("This section is under construction. Please check back later.")
+        st.markdown("## ACWR Dashboard (Coming Soon 🚧)")
+        st.info("This section is under construction. Please check back later.")
