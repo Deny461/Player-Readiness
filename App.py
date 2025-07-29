@@ -306,7 +306,7 @@ if st.session_state.page == "ACWR Dashboard":
             st.rerun()
         st.stop()
 
-    if st.button("⬅ Select Dashboard", key="acwr_back"):
+    if st.button("Select Dashboard", key="acwr_back"):
         st.session_state.page = "Home"
         st.session_state.proceed = False
         st.rerun()
