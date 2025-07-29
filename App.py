@@ -44,11 +44,10 @@ if st.session_state.page == "Home":
     st.stop()
 
 # === PLAYER GAUGES DASHBOARD ===
-    if st.session_state.page == "Player Gauges Dashboard":
-        if st.button("⬅ Back"):
-            st.session_state.page = "Home"
+if st.session_state.page == "Player Gauges Dashboard":
+    if st.button("⬅ Back", key="gauges_back"):
+        st.session_state.page = "Home"
         st.rerun()
-
     st.markdown("## Player Gauges Dashboard")
 
 # === CSV Loader ===
@@ -282,23 +281,22 @@ for player in players:
                 </div>
                 """, unsafe_allow_html=True)
 
-            # === ACWR DASHBOARD ===
-        if st.session_state.page == "ACWR Dashboard":
-            if st.button("⬅ Back", key="acwr_back"):
-                st.session_state.page = "Home"
-                st.rerun()
+    # === ACWR DASHBOARD ===
+# === ACWR DASHBOARD ===
+if st.session_state.page == "ACWR Dashboard":
+    if st.button("⬅ Back", key="acwr_back_unique"):
+        st.session_state.page = "Home"
+        st.rerun()
+    st.markdown("## ACWR Dashboard")
+    st.info("This ACWR dashboard is under development 🚧")
+    
+    # Placeholder structure for future ACWR charts
+    st.markdown("### Coming Soon: Acute:Chronic Workload Ratio Charts")
+    st.write("Here you’ll be able to view ACWR metrics across Distance, HSR, Sprint Distance, and Number of Sprints for each player.")
 
-            st.markdown("## ACWR Dashboard")
-
-            st.info("This ACWR dashboard is under development 🚧")
-
-            # Placeholder structure for future ACWR charts
-            st.markdown("### Coming Soon: Acute:Chronic Workload Ratio Charts")
-            st.write("Here you’ll be able to view ACWR metrics across Distance, HSR, Sprint Distance, and Number of Sprints for each player.")
-
-            # Example placeholder with columns for layout
-            cols = st.columns(2)
-            with cols[0]:
-                st.metric("Example Player", "1.2", "ACWR")
-            with cols[1]:
-                st.metric("Threshold", "0.8 - 1.3", "Optimal Zone")
+    # Example placeholder with columns for layout
+    cols = st.columns(2)
+    with cols[0]:
+        st.metric("Example Player", "1.2", "ACWR")
+    with cols[1]:
+        st.metric("Threshold", "0.8 - 1.3", "Optimal Zone")
