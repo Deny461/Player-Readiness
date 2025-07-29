@@ -12,11 +12,11 @@ st.set_page_config(
 
 # === LOGO HEADER ===
 with st.container():
-    col1, col2, col3 = st.columns([0.12, 0.002, 0.52])
+    col1, col2, col3 = st.columns([0.05, 0.002, 0.52])
     with col1: 
         st.image("BostonBoltsLogo.png", width=120)
     with col2: 
-        st.markdown("<div style='border-left:2px solid gray; height:180px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='border-left:2px solid gray; height:90px;'></div>", unsafe_allow_html=True)
     with col3: 
         st.image("MLSNextLogo.png", width=120)
 
