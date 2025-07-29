@@ -47,8 +47,16 @@ if st.session_state.page == "Home":
 if st.button("Select Dashboard", key="gauges_back"):
     st.session_state.page = "Home"
     st.rerun()
-
     st.markdown("## Player Gauges Dashboard")
+    col_spacer, colA, colB, col_spacer2 = st.columns([0.0001,0.1,1.5,1])
+with col1:
+    if st.button("Continue", key="team_continue"): 
+        st.session_state.proceed = True
+        st.rerun()
+with col2:
+    if st.button("Back", key="team_back"): 
+        st.session_state.proceed = False
+        st.rerun()
 
 # === CSV Loader ===
 @st.cache_data
