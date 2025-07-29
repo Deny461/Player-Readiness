@@ -12,7 +12,7 @@ st.set_page_config(
 
 # === LOGO HEADER ===
 with st.container():
-    col1, col2, col3 = st.columns([0.05, 0.002, 0.52])
+    col1, col2, col3 = st.columns([0.08, 0.002, 0.52])
     with col1: 
         st.image("BostonBoltsLogo.png", width=120)
     with col2: 
