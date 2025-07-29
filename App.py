@@ -44,10 +44,9 @@ if st.session_state.page == "Home":
     st.stop()
 
 # === PLAYER GAUGES DASHBOARD ===
-if st.session_state.page == "Player Gauges Dashboard":
-    if st.button("⬅ Back"):
-        st.session_state.page = "Home"
-        st.rerun()
+if st.button("Select Dashboard", key="gauges_back"):
+    st.session_state.page = "Home"
+    st.rerun()
 
     st.markdown("## Player Gauges Dashboard")
 
@@ -282,8 +281,8 @@ for player in players:
                 </div>
                 """, unsafe_allow_html=True)
 # === ACWR DASHBOARD (PLACEHOLDER) ===
-    if st.session_state.page == "ACWR Dashboard":
-        if st.button("⬅ Back"):
+    # On the ACWR Dashboard
+        if st.button("Select Dashboard", key="acwr_back"):
             st.session_state.page = "Home"
             st.rerun()
 
