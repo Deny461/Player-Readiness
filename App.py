@@ -52,6 +52,16 @@ if st.session_state.page == "Home":
 
 # === PLAYER GAUGES DASHBOARD ===
 if st.session_state.page == "Player Gauges Dashboard":
+    # … your Select Dashboard button here …
+
+    # 1) Debug toggle
+    if "show_debug" not in st.session_state:
+        st.session_state.show_debug = False
+    toggle_label = "Hide Debug Info" if st.session_state.show_debug else "Show Debug Info"
+    if st.button(toggle_label, key="debug_toggle"):
+        st.session_state.show_debug = not st.session_state.show_debug
+        st.rerun()
+
     st.markdown("## Player Gauges Dashboard")
 
     if not st.session_state.proceed:
@@ -275,20 +285,22 @@ if st.session_state.page == "Player Gauges Dashboard":
                         flag="🔮⚠️" if projection_used else "⚠️"
                     else: flag=""
 
+                # only show this block if debug is toggled on:
+            if st.session_state.show_debug:
                 st.markdown(f"""
-                <div style='font-size:14px;color:#555;'>
-                    <b>Debug for {metric_labels[metric]}</b><br>
-                    • Previous Week Used: {prev_week_str}<br>
-                    • Previous Week Total: {previous_week_total:.1f}<br>
-                    • Current Week So Far: {current_sum:.1f}<br>
-                    • Practices Done: {practices_done}<br>
-                    • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
-                    • Projected Total: {projected_total if projection_used else 'N/A'}<br>
-                    • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
-                    • Threshold (110%): {1.10*previous_week_total:.1f}<br>
-                    • ⚠️ Flag: {'YES' if flag else 'NO'}
-                </div>
-                """, unsafe_allow_html=True)
+            <div style='font-size:14px;color:#555;'>
+                <b>Debug for {metric_labels[metric]}</b><br>
+                • Previous Week Used: {prev_week_str}<br>
+                • Previous Week Total: {previous_week_total:.1f}<br>
+                • Current Week So Far: {current_sum:.1f}<br>
+                • Practices Done: {practices_done}<br>
+                • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
+                • Projected Total: {projected_total if projection_used else 'N/A'}<br>
+                • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
+                • Threshold (110%): {1.10*previous_week_total:.1f}<br>
+                • ⚠️ Flag: {'YES' if flag else 'NO'}
+            </div>
+            """, unsafe_allow_html=True)
 
     
 # === ACWR DASHBOARD ===
