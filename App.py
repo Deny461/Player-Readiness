@@ -337,7 +337,8 @@ if st.session_state.page == "ACWR Dashboard":
 
     # --- STEP 1: pick team ---
     if not st.session_state.proceed:
-        teams = [f"U{age} MLS Next" for age in [15,16,17,19]] + [f"U{age} MLS Next 2" for age in [15,16,17,19]]
+        teams = [f"U{age} MLS Next" for age in [15,16,17,19]] + \
+                [f"U{age} MLS Next 2" for age in [15,16,17,19]]
         sel = st.selectbox("Select Team", teams, key="acwr_team")
         if st.button("Continue", key="acwr_continue"):
             st.session_state.proceed = True
@@ -362,7 +363,8 @@ if st.session_state.page == "ACWR Dashboard":
     df_acwr['Date'] = pd.to_datetime(df_acwr['Date'])
 
     # --- DAILY AGGREGATION ---
-    metrics_acwr = ["Distance (m)","High Intensity Running (m)","Sprint Distance (m)","No. of Sprints"]
+    metrics_acwr = ["Distance (m)", "High Intensity Running (m)",
+                    "Sprint Distance (m)", "No. of Sprints"]
     df_daily = (
         df_acwr
         .groupby(["Athlete Name","Date"])[metrics_acwr]
@@ -377,12 +379,12 @@ if st.session_state.page == "ACWR Dashboard":
         df_daily[f"acute_{m}"] = (
             df_daily.groupby("Athlete Name")[m]
                     .rolling("7d").sum()
-                    .reset_index(0,drop=True)
+                    .reset_index(0, drop=True)
         )
         df_daily[f"chronic_{m}"] = (
             df_daily.groupby("Athlete Name")[m]
                     .rolling("28d").sum()
-                    .reset_index(0,drop=True) / 4
+                    .reset_index(0, drop=True) / 4
         )
         df_daily[f"acwr_{m}"] = df_daily[f"acute_{m}"] / df_daily[f"chronic_{m}"]
 
@@ -395,13 +397,11 @@ if st.session_state.page == "ACWR Dashboard":
         "Sprint Distance (m)": "#2ca02c",
         "No. of Sprints": "#d62728"
     }
-
     st.markdown("#### Show / Hide Metrics")
     cols = st.columns(len(metrics_acwr))
     show_metric = {}
     for idx, m in enumerate(metrics_acwr):
-        label = METRIC_LABELS[m]
-        show_metric[m] = cols[idx].checkbox(label, True, key=f"show_{m}")
+        show_metric[m] = cols[idx].checkbox(METRIC_LABELS[m], True, key=f"show_{m}")
 
     active_metrics = [m for m in metrics_acwr if show_metric[m]]
     if not active_metrics:
@@ -409,7 +409,7 @@ if st.session_state.page == "ACWR Dashboard":
     else:
         st.markdown("### Daily Rolling ACWR (7d ∶ 28d) by Player")
         for player in sorted(df_daily["Athlete Name"].unique()):
-            p = df_daily[df_daily["Athlete Name"]==player]
+            p = df_daily[df_daily["Athlete Name"] == player]
             if p.empty: continue
 
             fig = go.Figure()
@@ -425,11 +425,7 @@ if st.session_state.page == "ACWR Dashboard":
                 ))
 
             # highlight sweet-spot band
-            fig.add_hrect(
-                y0=0.8, y1=1.3,
-                fillcolor="lightgreen", opacity=0.2,
-                line_width=0
-            )
+            fig.add_hrect(y0=0.8, y1=1.3, fillcolor="lightgreen", opacity=0.2, line_width=0)
 
             fig.update_layout(
                 template="plotly_white",
@@ -438,8 +434,21 @@ if st.session_state.page == "ACWR Dashboard":
                 yaxis_title="ACWR Ratio",
                 legend_title="Metric",
                 font=dict(family="Arial", size=12),
-                margin=dict(t=50,b=40,l=40,r=40),
+                margin=dict(t=50, b=40, l=40, r=40),
                 height=350
             )
 
             st.plotly_chart(fig, use_container_width=True)
+
+            # --- WARNINGS ---
+            warnings = []
+            for m in active_metrics:
+                last_series = p[f"acwr_{m}"].dropna()
+                if not last_series.empty:
+                    val = last_series.iloc[-1]
+                    if val < 0.8:
+                        warnings.append(f"🚨 Undertrained for {METRIC_LABELS[m]}: ACWR = {val:.2f}")
+                    elif val > 1.3:
+                        warnings.append(f"⚠️ Overtrained for {METRIC_LABELS[m]}: ACWR = {val:.2f}")
+            for w in warnings:
+                st.markdown(w)
