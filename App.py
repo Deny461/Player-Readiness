@@ -103,14 +103,14 @@ if st.session_state.page == "Player Gauges Dashboard":
             mode="gauge+number", value=round(ratio,2),
             number={"font":{"size":20}},
             gauge={
-                "axis":{"range":[0, max(1.5,ratio)],"showticklabels":False},
-                "bar":{"color":get_color(ratio)},
-                "steps":[
-                    {"range":[0,0.5],"color":"#ffcccc"},
-                    {"range":[0.5,0.75],"color":"#ffe0b3"},
-                    {"range":[0.75,1.0],"color":"#ffffcc"},
-                    {"range":[1.0,1.3],"color":"#ccffcc"},
-                    {"range":[1.3,max(1.5,ratio)],"color":"#e6e6e6"}
+                "axis": {"range":[0, max(1.5,ratio)], "showticklabels":False},
+                "bar": {"color": get_color(ratio)},
+                "steps": [
+                    {"range":[0,0.5], "color":"#ffcccc"},
+                    {"range":[0.5,0.75], "color":"#ffe0b3"},
+                    {"range":[0.75,1.0], "color":"#ffffcc"},
+                    {"range":[1.0,1.3], "color":"#ccffcc"},
+                    {"range":[1.3, max(1.5,ratio)], "color":"#e6e6e6"}
                 ]
             }
         ))
@@ -123,7 +123,6 @@ if st.session_state.page == "Player Gauges Dashboard":
     if not os.path.exists(path):
         st.error(f"File not found: {path}")
         st.stop()
-
     df = load_data(path)
     df = df.dropna(subset=["Date","Session Type","Athlete Name","Segment Name"])
     df = df[df["Segment Name"]=="Whole Session"].sort_values("Date")
@@ -244,11 +243,35 @@ if st.session_state.page == "Player Gauges Dashboard":
         cols = st.columns(len(metrics))
 
         for i, metric in enumerate(metrics):
-            # Special Top Speed logic
+            # === Top Speed special case ===
             if metric=="Top Speed (kph)":
                 train_val = grouped[metric].max()
                 benchmark = top_speed_benchmark
-                fig = create_readiness_gauge(train_val, benchmark, metric_labels[metric])
+                ratio = 0 if pd.isna(benchmark) or benchmark==0 else train_val/benchmark
+
+                # Custom gauge up to 100% with four bands
+                fig = go.Figure(go.Indicator(
+                    mode="gauge+number",
+                    value=round(ratio,2),
+                    number={"font":{"size":20}},
+                    gauge={
+                        "axis":{"range":[0,1.0],"showticklabels":False},
+                        "bar":{"color":
+                            "red"    if ratio<0.5 else
+                            "orange" if ratio<0.75 else
+                            "yellow" if ratio<0.9 else
+                            "green"
+                        },
+                        "steps":[
+                            {"range":[0,0.5],"color":"#ffcccc"},
+                            {"range":[0.5,0.75],"color":"#ffe0b3"},
+                            {"range":[0.75,0.9],"color":"#ffffcc"},
+                            {"range":[0.9,1.0],"color":"#ccffcc"},
+                        ]
+                    }
+                ))
+                fig.update_layout(margin=dict(t=10,b=10,l=10,r=10), height=180)
+
                 with cols[i]:
                     st.markdown(
                         f"<div style='text-align:center;font-weight:bold;'>{metric_labels[metric]}</div>",
@@ -259,7 +282,7 @@ if st.session_state.page == "Player Gauges Dashboard":
                         use_container_width=True,
                         key=f"{player}-top-{i}"
                     )
-                    if train_val < 0.9 * benchmark:
+                    if ratio < 0.9:
                         st.markdown(
                             "<div style='text-align:center;color:red;font-weight:bold;'>"
                             "⚠️ Did not reach 90% of max speed this week"
@@ -268,7 +291,7 @@ if st.session_state.page == "Player Gauges Dashboard":
                         )
                 continue
 
-            # All other metrics
+            # === All other metrics ===
             train_val = grouped[metric].sum()
             benchmark = match_avg.get(metric, None)
             fig = create_readiness_gauge(train_val, benchmark, metric_labels[metric])
@@ -289,7 +312,6 @@ if st.session_state.page == "Player Gauges Dashboard":
                 current_sum = training_week[metric].sum()
                 previous_week_total = previous_week_total_map.get(metric, 0)
 
-                # Historical practice averages
                 iso_all = p_df["Date"].dt.isocalendar()
                 p_df["PracticeNumber"] = (
                     p_df[p_df["Session Type"]=="Training Session"]
@@ -323,22 +345,20 @@ if st.session_state.page == "Player Gauges Dashboard":
                     else:
                         flag=""
 
-                                # Always show clean flag line (replacing the old st.markdown)
+                # Flag message
                 if flag:
                     if projection_used:
-                        # Projected case
                         st.markdown(
-                            f"<div style='text-align:center;font-weight:bold;'>"
-                            f"⚠️Projected total of {metric_labels[metric]} is on track to be > 110% of last week’s total"
-                            f"</div>",
+                            "<div style='text-align:center;font-weight:bold;'>"
+                            f"Projected total of {metric_labels[metric]} is on track to be > 110% of last week’s total"
+                            "</div>",
                             unsafe_allow_html=True
                         )
                     else:
-                        # Actual case
                         st.markdown(
-                            f"<div style='text-align:center;font-weight:bold;'>"
-                            f"⚠️{metric_labels[metric]} is > 110% of last week’s total"
-                            f"</div>",
+                            "<div style='text-align:center;font-weight:bold;'>"
+                            f"{metric_labels[metric]} is > 110% than last week’s total"
+                            "</div>",
                             unsafe_allow_html=True
                         )
 
