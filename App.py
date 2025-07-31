@@ -411,7 +411,7 @@ if st.session_state.page == "ACWR Dashboard":
             template="plotly_white",
             title=f"{player} — ACWR (7d ∶ 28d)",
             xaxis_title="Date",
-            yaxis_title="ACWR Ratio",
+            yaxis_title="ACWR",
             legend_title="Metric",
             font=dict(family="Arial", size=12),
             margin=dict(t=50,b=40,l=40,r=40),
