@@ -28,26 +28,27 @@ def get_color(ratio):
     return "black"
 
 def create_readiness_gauge(value, benchmark, label):
-    ratio = 0 if pd.isna(benchmark) or benchmark == 0 else value/benchmark
+    ratio = 0 if pd.isna(benchmark) or benchmark == 0 else value / benchmark
     fig = go.Figure(go.Indicator(
-        mode="gauge+number", value=round(ratio,2),
-        number={"font":{"size":20}},
+        mode="gauge+number",
+        value=round(ratio, 2),
+        number={"font": {"size": 20}},
         gauge={
-            "axis": {"range":[0, max(1.5,ratio)], "showticklabels":False},
+            "axis": {"range": [0, max(1.5, ratio)], "showticklabels": False},
             "bar": {"color": get_color(ratio)},
             "steps": [
-                {"range":[0,0.5],   "color":"#ffcccc"},
-                {"range":[0.5,0.75],"color":"#ffe0b3"},
-                {"range":[0.75,1.0],"color":"#ffffcc"},
-                {"range":[1.0,1.3], "color":"#ccffcc"},
-                {"range":[1.3,max(1.5,ratio)], "color":"#e6e6e6"}
+                {"range": [0, 0.5], "color": "#ffcccc"},
+                {"range": [0.5, 0.75], "color": "#ffe0b3"},
+                {"range": [0.75, 1.0], "color": "#ffffcc"},
+                {"range": [1.0, 1.3], "color": "#ccffcc"},
+                {"range": [1.3, max(1.5, ratio)], "color": "#e6e6e6"}
             ]
         }
     ))
-    fig.update_layout(margin=dict(t=10,b=10,l=10,r=10), height=180)
+    fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=180)
     return fig
 
-# === METRICS SETUP ===
+# === METRICS ===
 METRICS = [
     "Distance (m)",
     "High Intensity Running (m)",
@@ -73,14 +74,10 @@ if "show_debug" not in st.session_state:
 
 # === LOGO & TITLE ===
 with st.container():
-    col1, col2, col3 = st.columns([0.08, 0.001, 0.72])
-    with col1:
-        st.image("BostonBoltsLogo.png", width=120)
-    with col2:
-        st.markdown("<div style='border-left:2px solid gray; height:90px;'></div>", unsafe_allow_html=True)
-    with col3:
-        st.image("MLSNextLogo.png", width=120)
-
+    c1, c2, c3 = st.columns([0.08, 0.001, 0.72])
+    with c1: st.image("BostonBoltsLogo.png", width=120)
+    with c2: st.markdown("<div style='border-left:2px solid gray; height:90px;'></div>", unsafe_allow_html=True)
+    with c3: st.image("MLSNextLogo.png", width=120)
 with st.container():
     st.markdown(
         "<h1 style='text-align:center;font-size:72px;margin-top:-60px;'>Player Readiness</h1>",
@@ -91,10 +88,10 @@ with st.container():
 if st.session_state.page == "Home":
     st.markdown("### Select a Dashboard")
     choice = st.selectbox(
-        "Which dashboard?",
+        "Choose which dashboard you want to view:",
         ["Player Gauges Dashboard", "ACWR Dashboard"]
     )
-    if st.button("Continue", key="landing_continue"):
+    if st.button("Continue", key="dashboard_continue"):
         st.session_state.page = choice
         st.session_state.proceed = False
         st.rerun()
@@ -110,7 +107,7 @@ if st.session_state.page == "Player Gauges Dashboard":
 
     st.markdown("## Player Gauges Dashboard")
 
-    # Step 1: team selection
+    # Team selection
     if not st.session_state.proceed:
         teams = [f"U{age} MLS Next" for age in [15,16,17,19]] + [f"U{age} MLS Next 2" for age in [15,16,17,19]]
         sel = st.selectbox("Select Team", teams, key="gauges_team")
@@ -126,7 +123,7 @@ if st.session_state.page == "Player Gauges Dashboard":
         st.session_state.proceed = False
         st.rerun()
 
-    # Load data
+    # Load and prep data
     team = st.session_state.selected_team
     path = f"Player Data/{team}_PD_Data.csv"
     if not os.path.exists(path):
@@ -159,7 +156,6 @@ if st.session_state.page == "Player Gauges Dashboard":
         for m in METRICS:
             p_df[m] = pd.to_numeric(p_df[m], errors="coerce")
 
-        # Match benchmarks
         matches = p_df[
             (p_df["Session Type"]=="Match Session") &
             (p_df["Date"]<=latest_match_date) &
@@ -168,7 +164,6 @@ if st.session_state.page == "Player Gauges Dashboard":
         if matches.empty:
             continue
 
-        # This week's training
         iso = p_df["Date"].dt.isocalendar()
         training_week = p_df[
             (p_df["Session Type"]=="Training Session") &
@@ -177,15 +172,14 @@ if st.session_state.page == "Player Gauges Dashboard":
         ]
         if training_week.empty:
             training_week = pd.DataFrame([{
-                "Athlete Name":player,
+                "Athlete Name": player,
                 "Date": latest_training_date,
-                "Session Type":"Training Session",
-                "Segment Name":"Whole Session",
-                **{m:0 for m in METRICS},
-                "Duration (mins)":0
+                "Session Type": "Training Session",
+                "Segment Name": "Whole Session",
+                **{m: 0 for m in METRICS},
+                "Duration (mins)": 0
             }])
 
-        # Previous non-zero week sums
         prev = p_df[
             (p_df["Session Type"]=="Training Session") &
             (p_df["Date"]<training_week["Date"].min())
@@ -202,7 +196,9 @@ if st.session_state.page == "Player Gauges Dashboard":
                     (prev["Date"].dt.isocalendar().week==last["Week"]) &
                     (prev["Date"].dt.isocalendar().year==last["Year"])
                 ]
-                previous_week_total_map = {m: prev_data[m].sum() for m in METRICS if m!="Top Speed (kph)"}
+                previous_week_total_map = {
+                    m: prev_data[m].sum() for m in METRICS if m!="Top Speed (kph)"
+                }
             else:
                 prev_week_str="None"
                 previous_week_total_map={m:0 for m in METRICS if m!="Top Speed (kph)"}
@@ -210,7 +206,6 @@ if st.session_state.page == "Player Gauges Dashboard":
             prev_week_str="None"
             previous_week_total_map={m:0 for m in METRICS if m!="Top Speed (kph)"}
 
-        # Match per-90 avg
         match_avg = {}
         for m in METRICS:
             if m!="Top Speed (kph)":
@@ -230,11 +225,11 @@ if st.session_state.page == "Player Gauges Dashboard":
         cols = st.columns(len(METRICS))
 
         for i, metric in enumerate(METRICS):
-            # Top Speed special gauge
             if metric=="Top Speed (kph)":
                 train_val = grouped[metric].max()
                 benchmark = top_speed_benchmark
                 ratio = 0 if pd.isna(benchmark) or benchmark==0 else train_val/benchmark
+
                 fig = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=round(ratio,2),
@@ -268,7 +263,6 @@ if st.session_state.page == "Player Gauges Dashboard":
                         )
                 continue
 
-            # Other metrics
             train_val = grouped[metric].sum()
             benchmark = match_avg.get(metric, None)
             fig = create_readiness_gauge(train_val, benchmark, METRIC_LABELS[metric])
@@ -276,7 +270,6 @@ if st.session_state.page == "Player Gauges Dashboard":
                 st.markdown(f"<div style='text-align:center;font-weight:bold;'>{METRIC_LABELS[metric]}</div>", unsafe_allow_html=True)
                 st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}-{i}")
 
-                # Projection & flag
                 practices_done = training_week.shape[0]
                 current_sum = training_week[metric].sum()
                 previous_week_total = previous_week_total_map.get(metric, 0)
@@ -300,7 +293,7 @@ if st.session_state.page == "Player Gauges Dashboard":
                         projected_total = current_sum + practice_avgs.loc[needed].sum()
                         flag_val=projected_total; projection_used=True
                     else:
-                        projected_total=None; flag_val=current_sum; projection_used=False
+                        projected_total=None; flag_val=current_sum;_projection_used=False
                     if previous_week_total>0 and flag_val>1.10*previous_week_total:
                         flag="🔮⚠️" if projection_used else "⚠️"
                     else:
@@ -310,14 +303,14 @@ if st.session_state.page == "Player Gauges Dashboard":
                     if projection_used:
                         st.markdown(
                             "<div style='text-align:center;font-weight:bold;'>"
-                            f"Projected total of {METRIC_LABELS[metric]} is on track to be > 110% of last week’s total"
+                            f"⚠️Projected total of {METRIC_LABELS[metric]} is on track to be > 110% of last week’s total"
                             "</div>",
                             unsafe_allow_html=True
                         )
                     else:
                         st.markdown(
                             "<div style='text-align:center;font-weight:bold;'>"
-                            f"{METRIC_LABELS[metric]} is > 110% than last week’s total"
+                            f"⚠️{METRIC_LABELS[metric]} is > 110% than last week’s total"
                             "</div>",
                             unsafe_allow_html=True
                         )
@@ -325,16 +318,16 @@ if st.session_state.page == "Player Gauges Dashboard":
                 if st.session_state.show_debug:
                     st.markdown(f"""
                         <div style='font-size:14px;color:#555;'>
-                          <b>Debug for {METRIC_LABELS[metric]}</b><br>
-                          • Previous Week Used: {prev_week_str}<br>
-                          • Previous Week Total: {previous_week_total:.1f}<br>
-                          • Current Week So Far: {current_sum:.1f}<br>
-                          • Practices Done: {practices_done}<br>
-                          • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
-                          • Projected Total: {projected_total if projection_used else 'N/A'}<br>
-                          • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
-                          • Threshold (110%): {1.10*previous_week_total:.1f}<br>
-                          • ⚠️ Flag: {'YES' if flag else 'NO'}
+                            <b>Debug for {METRIC_LABELS[metric]}</b><br>
+                            • Previous Week Used: {prev_week_str}<br>
+                            • Previous Week Total: {previous_week_total:.1f}<br>
+                            • Current Week So Far: {current_sum:.1f}<br>
+                            • Practices Done: {practices_done}<br>
+                            • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
+                            • Projected Total: {projected_total if projection_used else 'N/A'}<br>
+                            • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
+                            • Threshold (110%): {1.10*previous_week_total:.1f}<br>
+                            • ⚠️ Flag: {'YES' if flag else 'NO'}
                         </div>
                     """, unsafe_allow_html=True)
 
@@ -342,7 +335,6 @@ if st.session_state.page == "Player Gauges Dashboard":
 if st.session_state.page == "ACWR Dashboard":
     st.markdown("## ACWR Dashboard")
 
-    # Step 1: team selection
     if not st.session_state.proceed:
         teams = [f"U{age} MLS Next" for age in [15,16,17,19]] + [f"U{age} MLS Next 2" for age in [15,16,17,19]]
         sel = st.selectbox("Select Team", teams, key="acwr_team")
@@ -352,49 +344,78 @@ if st.session_state.page == "ACWR Dashboard":
             st.rerun()
         st.stop()
 
-    # Back to landing
     if st.button("Select Dashboard", key="acwr_back"):
         st.session_state.page = "Home"
         st.session_state.proceed = False
         st.rerun()
 
-    # Load & prep data
+    # Load & filter training sessions
     team = st.session_state.selected_team
     path = f"Player Data/{team}_PD_Data.csv"
     df_acwr = load_data(path)
-    df_acwr = df_acwr.dropna(subset=["Date","Session Type","Athlete Name","Segment Name"])
-    df_acwr = df_acwr.query("`Segment Name`=='Whole Session' and `Session Type`=='Training Session'")
+    df_acwr = (
+        df_acwr
+        .dropna(subset=["Date","Session Type","Athlete Name","Segment Name"])
+        .query("`Segment Name`=='Whole Session' and `Session Type`=='Training Session'")
+    )
     df_acwr['Date'] = pd.to_datetime(df_acwr['Date'])
-    df_acwr['WeekStart'] = df_acwr['Date'] - pd.to_timedelta(df_acwr['Date'].dt.weekday, unit='d')
 
-    st.markdown("### Weekly Workload Trends by Player")
-    colors = ["#1f77b4","#ff7f0e","#2ca02c","#d62728"]
-    for player in sorted(df_acwr["Athlete Name"].unique()):
-        p = df_acwr[df_acwr["Athlete Name"]==player]
-        weekly = p.groupby("WeekStart")[
-            ["Distance (m)","High Intensity Running (m)","Sprint Distance (m)","No. of Sprints"]
-        ].sum().reset_index()
+    # Daily aggregation
+    metrics_acwr = METRICS[:-1]  # exclude Top Speed
+    df_daily = (
+        df_acwr
+        .groupby(["Athlete Name","Date"])[metrics_acwr]
+        .sum()
+        .reset_index()
+        .sort_values(["Athlete Name","Date"])
+        .set_index("Date")
+    )
+
+    # Compute rolling ACWR
+    for m in metrics_acwr:
+        df_daily[f"acute_{m}"] = (
+            df_daily.groupby("Athlete Name")[m]
+                    .rolling("7d").sum()
+                    .reset_index(0, drop=True)
+        )
+        df_daily[f"chronic_{m}"] = (
+            df_daily.groupby("Athlete Name")[m]
+                    .rolling("28d").sum()
+                    .reset_index(0, drop=True) / 4
+        )
+        df_daily[f"acwr_{m}"] = df_daily[f"acute_{m}"] / df_daily[f"chronic_{m}"]
+
+    df_daily = df_daily.reset_index()
+
+    st.markdown("### Daily Rolling ACWR (7d ∶ 28d) by Player")
+    palette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728"]
+    for player in sorted(df_daily["Athlete Name"].unique()):
+        p = df_daily[df_daily["Athlete Name"]==player]
+        if p.empty: continue
 
         fig = go.Figure()
-        for idx, metric in enumerate(["Distance (m)","High Intensity Running (m)","Sprint Distance (m)","No. of Sprints"]):
+        for i, m in enumerate(metrics_acwr):
             fig.add_trace(go.Scatter(
-                x=weekly["WeekStart"],
-                y=weekly[metric],
+                x=p["Date"],
+                y=p[f"acwr_{m}"],
                 mode="lines+markers",
-                name=METRIC_LABELS[metric],
+                name=METRIC_LABELS[m],
                 line_shape="spline",
-                line=dict(width=3, color=colors[idx]),
-                marker=dict(size=6, symbol="circle", color=colors[idx])
+                line=dict(width=2, color=palette[i]),
+                marker=dict(size=4, color=palette[i])
             ))
+
+        fig.add_hrect(y0=0.8, y1=1.3, fillcolor="lightgreen", opacity=0.2, line_width=0)
 
         fig.update_layout(
             template="plotly_white",
-            title=f"{player} Weekly Workload",
-            xaxis_title="Week Starting",
-            yaxis_title="Weekly Total",
+            title=f"{player} — ACWR (7d ∶ 28d)",
+            xaxis_title="Date",
+            yaxis_title="ACWR Ratio",
             legend_title="Metric",
-            font=dict(family="Arial", size=13),
+            font=dict(family="Arial", size=12),
             margin=dict(t=50,b=40,l=40,r=40),
-            height=420
+            height=350
         )
+
         st.plotly_chart(fig, use_container_width=True)
