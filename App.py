@@ -335,17 +335,15 @@ if st.session_state.page == "Player Gauges Dashboard":
 if st.session_state.page == "ACWR Dashboard":
     st.markdown("## ACWR Dashboard")
 
-    # Team selection step
     if not st.session_state.proceed:
         teams = [f"U{age} MLS Next" for age in [15,16,17,19]] + [f"U{age} MLS Next 2" for age in [15,16,17,19]]
         sel = st.selectbox("Select Team", teams, key="acwr_team")
-        if st.button("Continue", key="acwr_go"):
+        if st.button("Continue", key="acwr_continue"):
             st.session_state.proceed = True
             st.session_state.selected_team = sel
             st.rerun()
         st.stop()
 
-    # Back to landing
     if st.button("Select Dashboard", key="acwr_back"):
         st.session_state.page = "Home"
         st.session_state.proceed = False
@@ -373,64 +371,51 @@ if st.session_state.page == "ACWR Dashboard":
         .set_index("Date")
     )
 
-    # Compute rolling ACWR 7/28
+    # Compute rolling ACWR
     for m in metrics_acwr:
         df_daily[f"acute_{m}"] = (
             df_daily.groupby("Athlete Name")[m]
                     .rolling("7d").sum()
-                    .reset_index(0,drop=True)
+                    .reset_index(0, drop=True)
         )
         df_daily[f"chronic_{m}"] = (
             df_daily.groupby("Athlete Name")[m]
                     .rolling("28d").sum()
-                    .reset_index(0,drop=True) / 4
+                    .reset_index(0, drop=True) / 4
         )
         df_daily[f"acwr_{m}"] = df_daily[f"acute_{m}"] / df_daily[f"chronic_{m}"]
 
     df_daily = df_daily.reset_index()
 
-    # === TOGGLE METRICS ===
-    st.markdown("#### Show / Hide Metrics")
-    cols = st.columns(len(metrics_acwr))
-    show_metric = {}
-    for idx, m in enumerate(metrics_acwr):
-        label = METRIC_LABELS[m]
-        show_metric[m] = cols[idx].checkbox(label, True, key=f"show_{m}")
+    st.markdown("### Daily Rolling ACWR (7d ∶ 28d) by Player")
+    palette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728"]
+    for player in sorted(df_daily["Athlete Name"].unique()):
+        p = df_daily[df_daily["Athlete Name"]==player]
+        if p.empty: continue
 
-    metrics_plot = [m for m in metrics_acwr if show_metric[m]]
-    if not metrics_plot:
-        st.info("Select at least one metric to display.")
-    else:
-        st.markdown("### Daily Rolling ACWR (7d ∶ 28d) by Player")
-        palette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728"]
-        for player in sorted(df_daily["Athlete Name"].unique()):
-            p = df_daily[df_daily["Athlete Name"]==player]
-            if p.empty: continue
+        fig = go.Figure()
+        for i, m in enumerate(metrics_acwr):
+            fig.add_trace(go.Scatter(
+                x=p["Date"],
+                y=p[f"acwr_{m}"],
+                mode="lines+markers",
+                name=METRIC_LABELS[m],
+                line_shape="spline",
+                line=dict(width=2, color=palette[i]),
+                marker=dict(size=4, color=palette[i])
+            ))
 
-            fig = go.Figure()
-            for i, m in enumerate(metrics_plot):
-                fig.add_trace(go.Scatter(
-                    x=p["Date"],
-                    y=p[f"acwr_{m}"],
-                    mode="lines+markers",
-                    name=METRIC_LABELS[m],
-                    line_shape="spline",
-                    line=dict(width=2, color=palette[i]),
-                    marker=dict(size=4, color=palette[i])
-                ))
+        fig.add_hrect(y0=0.8, y1=1.3, fillcolor="lightgreen", opacity=0.2, line_width=0)
 
-            # highlight sweet-spot band
-            fig.add_hrect(y0=0.8, y1=1.3, fillcolor="lightgreen", opacity=0.2, line_width=0)
+        fig.update_layout(
+            template="plotly_white",
+            title=f"{player} — ACWR (7d ∶ 28d)",
+            xaxis_title="Date",
+            yaxis_title="ACWR",
+            legend_title="Metric",
+            font=dict(family="Arial", size=12),
+            margin=dict(t=50,b=40,l=40,r=40),
+            height=350
+        )
 
-            fig.update_layout(
-                template="plotly_white",
-                title=f"{player} — ACWR (7d ∶ 28d)",
-                xaxis_title="Date",
-                yaxis_title="ACWR Ratio",
-                legend_title="Metric",
-                font=dict(family="Arial", size=12),
-                margin=dict(t=50,b=40,l=40,r=40),
-                height=350
-            )
-
-            st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
