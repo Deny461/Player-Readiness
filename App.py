@@ -335,26 +335,25 @@ if st.session_state.page == "Player Gauges Dashboard":
 if st.session_state.page == "ACWR Dashboard":
     st.markdown("## ACWR Dashboard")
 
-    # Team selection step
+    # --- STEP 1: pick team ---
     if not st.session_state.proceed:
         teams = [f"U{age} MLS Next" for age in [15,16,17,19]] + [f"U{age} MLS Next 2" for age in [15,16,17,19]]
         sel = st.selectbox("Select Team", teams, key="acwr_team")
-        if st.button("Continue", key="acwr_go"):
+        if st.button("Continue", key="acwr_continue"):
             st.session_state.proceed = True
             st.session_state.selected_team = sel
             st.rerun()
         st.stop()
 
-    # Back to landing
+    # --- BACK TO HOME ---
     if st.button("Select Dashboard", key="acwr_back"):
         st.session_state.page = "Home"
         st.session_state.proceed = False
         st.rerun()
 
-    # Load & filter training sessions
+    # --- LOAD & FILTER DATA ---
     team = st.session_state.selected_team
-    path = f"Player Data/{team}_PD_Data.csv"
-    df_acwr = load_data(path)
+    df_acwr = load_data(f"Player Data/{team}_PD_Data.csv")
     df_acwr = (
         df_acwr
         .dropna(subset=["Date","Session Type","Athlete Name","Segment Name"])
@@ -362,8 +361,8 @@ if st.session_state.page == "ACWR Dashboard":
     )
     df_acwr['Date'] = pd.to_datetime(df_acwr['Date'])
 
-    # Daily aggregation
-    metrics_acwr = METRICS[:-1]  # exclude Top Speed
+    # --- DAILY AGGREGATION ---
+    metrics_acwr = ["Distance (m)","High Intensity Running (m)","Sprint Distance (m)","No. of Sprints"]
     df_daily = (
         df_acwr
         .groupby(["Athlete Name","Date"])[metrics_acwr]
@@ -373,7 +372,7 @@ if st.session_state.page == "ACWR Dashboard":
         .set_index("Date")
     )
 
-    # Compute rolling ACWR 7/28
+    # --- ROLLING ACUTE/CHRONIC & ACWR ---
     for m in metrics_acwr:
         df_daily[f"acute_{m}"] = (
             df_daily.groupby("Athlete Name")[m]
@@ -389,7 +388,14 @@ if st.session_state.page == "ACWR Dashboard":
 
     df_daily = df_daily.reset_index()
 
-    # === TOGGLE METRICS ===
+    # --- COLOR MAP & TOGGLES ---
+    color_map = {
+        "Distance (m)": "#1f77b4",
+        "High Intensity Running (m)": "#ff7f0e",
+        "Sprint Distance (m)": "#2ca02c",
+        "No. of Sprints": "#d62728"
+    }
+
     st.markdown("#### Show / Hide Metrics")
     cols = st.columns(len(metrics_acwr))
     show_metric = {}
@@ -397,30 +403,33 @@ if st.session_state.page == "ACWR Dashboard":
         label = METRIC_LABELS[m]
         show_metric[m] = cols[idx].checkbox(label, True, key=f"show_{m}")
 
-    metrics_plot = [m for m in metrics_acwr if show_metric[m]]
-    if not metrics_plot:
+    active_metrics = [m for m in metrics_acwr if show_metric[m]]
+    if not active_metrics:
         st.info("Select at least one metric to display.")
     else:
         st.markdown("### Daily Rolling ACWR (7d ∶ 28d) by Player")
-        palette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728"]
         for player in sorted(df_daily["Athlete Name"].unique()):
             p = df_daily[df_daily["Athlete Name"]==player]
             if p.empty: continue
 
             fig = go.Figure()
-            for i, m in enumerate(metrics_plot):
+            for m in active_metrics:
                 fig.add_trace(go.Scatter(
                     x=p["Date"],
                     y=p[f"acwr_{m}"],
                     mode="lines+markers",
                     name=METRIC_LABELS[m],
                     line_shape="spline",
-                    line=dict(width=2, color=palette[i]),
-                    marker=dict(size=4, color=palette[i])
+                    line=dict(width=2, color=color_map[m]),
+                    marker=dict(size=4, color=color_map[m])
                 ))
 
             # highlight sweet-spot band
-            fig.add_hrect(y0=0.8, y1=1.3, fillcolor="lightgreen", opacity=0.2, line_width=0)
+            fig.add_hrect(
+                y0=0.8, y1=1.3,
+                fillcolor="lightgreen", opacity=0.2,
+                line_width=0
+            )
 
             fig.update_layout(
                 template="plotly_white",
