@@ -323,14 +323,24 @@ if st.session_state.page == "Player Gauges Dashboard":
                     else:
                         flag=""
 
-                # Always show clean flag line
+                                # Always show clean flag line (replacing the old st.markdown)
                 if flag:
-                    label = "Projected" if projection_used else "Actual"
-                    st.markdown(
-                        f"<div style='text-align:center;font-weight:bold;'>{flag} "
-                        f"{label} {metric_labels[metric]}: {flag_val:.1f}</div>",
-                        unsafe_allow_html=True
-                    )
+                    if projection_used:
+                        # Projected case
+                        st.markdown(
+                            f"<div style='text-align:center;font-weight:bold;'>"
+                            f"Projected total of {metric_labels[metric]} is on track to be > 110% of last week’s total"
+                            f"</div>",
+                            unsafe_allow_html=True
+                        )
+                    else:
+                        # Actual case
+                        st.markdown(
+                            f"<div style='text-align:center;font-weight:bold;'>"
+                            f"{metric_labels[metric]} is > 110% of last week’s total"
+                            f"</div>",
+                            unsafe_allow_html=True
+                        )
 
                 # Debug info
                 if st.session_state.show_debug:
