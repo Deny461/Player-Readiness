@@ -329,7 +329,7 @@ if st.session_state.page == "Player Gauges Dashboard":
                         # Projected case
                         st.markdown(
                             f"<div style='text-align:center;font-weight:bold;'>"
-                            f"Projected total of {metric_labels[metric]} is on track to be > 110% of last week’s total"
+                            f"⚠️Projected total of {metric_labels[metric]} is on track to be > 110% of last week’s total"
                             f"</div>",
                             unsafe_allow_html=True
                         )
@@ -337,7 +337,7 @@ if st.session_state.page == "Player Gauges Dashboard":
                         # Actual case
                         st.markdown(
                             f"<div style='text-align:center;font-weight:bold;'>"
-                            f"{metric_labels[metric]} is > 110% of last week’s total"
+                            f"⚠️{metric_labels[metric]} is > 110% of last week’s total"
                             f"</div>",
                             unsafe_allow_html=True
                         )
