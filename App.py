@@ -267,72 +267,84 @@ if st.session_state.page == "Player Gauges Dashboard":
                         )
                 continue
 
-            # === All other metrics ===
-            train_val = grouped_trainings[metric].sum()
-            benchmark = match_avg.get(metric, None)
-            fig = create_readiness_gauge(train_val, benchmark, metric_labels[metric])
-            with cols[i]:
-                st.markdown(
-                    f"<div style='text-align:center;font-weight:bold;'>"
-                    f"{metric_labels[metric]}</div>",
-                    unsafe_allow_html=True
-                )
-                st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
+            # === All other metrics (Distance, HSR, Sprints) ===
+    train_val = grouped_trainings[metric].sum()
+    benchmark = match_avg.get(metric, None)
 
-                # Projection & flag logic
-                practices_done = training_week.shape[0]
-                current_sum = training_week[metric].sum()
-                previous_week_total = previous_week_total_map.get(metric, 0)
+    fig = create_readiness_gauge(train_val, benchmark, metric_labels[metric])
+    with cols[i]:
+        st.markdown(
+            f"<div style='text-align:center;font-weight:bold;'>{metric_labels[metric]}</div>",
+            unsafe_allow_html=True
+        )
+        st.plotly_chart(fig, use_container_width=True, key=f"{player}-{metric}")
 
-                # Historical averages per practice number
-                iso_vals_all = player_data["Date"].dt.isocalendar()
-                player_data["PracticeNumber"] = (
-                    player_data[player_data["Session Type"]=="Training Session"]
-                    .groupby([iso_vals_all.year, iso_vals_all.week])
-                    .cumcount()+1
-                ).clip(upper=3)
-                practice_avgs = (
-                    player_data[player_data["Session Type"]=="Training Session"]
-                    .groupby("PracticeNumber")[metric].mean()
-                    .reindex([1,2,3], fill_value=0)
-                )
+        # --- your existing projection & flag logic ---
+        practices_done = training_week.shape[0]
+        current_sum = training_week[metric].sum()
+        previous_week_total = previous_week_total_map.get(metric, 0)
 
-                if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
-                    flag = "⚠️"
-                    flag_val = current_sum
-                    projection_used = False
-                    projected_total = "N/A"
-                else:
-                    if practices_done < 3:
-                        needed = [p for p in range(practices_done+1,4)]
-                        projected_total = current_sum + practice_avgs.loc[needed].sum()
-                        flag_val = projected_total
-                        projection_used = True
-                    else:
-                        projected_total = "N/A"
-                        flag_val = current_sum
-                        projection_used = False
-                    if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
-                        flag = "🔮⚠️" if projection_used else "⚠️"
-                    else:
-                        flag = ""
+        # Historical practice averages
+        iso_vals_all = player_data["Date"].dt.isocalendar()
+        player_data["PracticeNumber"] = (
+            player_data[player_data["Session Type"]=="Training Session"]
+            .groupby([iso_vals_all.year, iso_vals_all.week])
+            .cumcount()+1
+        ).clip(upper=3)
+        practice_avgs = (
+            player_data[player_data["Session Type"]=="Training Session"]
+            .groupby("PracticeNumber")[metric].mean()
+            .reindex([1,2,3], fill_value=0)
+        )
 
-                # Debug info
-                if st.session_state.show_debug:
-                    st.markdown(f"""
-                        <div style='font-size:14px;color:#555;'>
-                            <b>Debug for {metric_labels[metric]}</b><br>
-                            • Previous Week Used: {prev_week_str}<br>
-                            • Previous Week Total: {previous_week_total:.1f}<br>
-                            • Current Week So Far: {current_sum:.1f}<br>
-                            • Practices Done: {practices_done}<br>
-                            • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
-                            • Projected Total: {projected_total if projection_used else 'N/A'}<br>
-                            • Final Used: {flag_val:.1f} ({'Projected' if projection_used else 'Actual'})<br>
-                            • Threshold (110%): {1.10*previous_week_total:.1f}<br>
-                            • ⚠️ Flag: {'YES' if flag else 'NO'}
-                        </div>
-                    """, unsafe_allow_html=True)
+        if previous_week_total > 0 and current_sum > 1.10 * previous_week_total:
+            flag = "⚠️"
+            flag_val = current_sum
+            projection_used = False
+            projected_total = None
+        else:
+            if practices_done < 3:
+                needed = [p for p in range(practices_done+1,4)]
+                projected_total = current_sum + practice_avgs.loc[needed].sum()
+                flag_val = projected_total
+                projection_used = True
+            else:
+                projected_total = None
+                flag_val = current_sum
+                projection_used = False
+
+            if previous_week_total > 0 and flag_val > 1.10 * previous_week_total:
+                flag = "🔮⚠️" if projection_used else "⚠️"
+            else:
+                flag = ""
+
+        # --- NEW: Always show a concise flag summary under the gauge ---
+        if flag:
+            # Determine label
+            label = "Projected" if projection_used else "Actual"
+            value = flag_val
+            st.markdown(
+                f"<div style='text-align:center;color:black;font-weight:bold;'>"
+                f"{flag} {label} {metric_labels[metric]}: {value:.1f}</div>",
+                unsafe_allow_html=True
+            )
+
+        # --- Debug info still behind the toggle ---
+        if st.session_state.show_debug:
+            st.markdown(f"""
+                <div style='font-size:14px;color:#555;'>
+                    <b>Debug for {metric_labels[metric]}</b><br>
+                    • Previous Week Used: {prev_week_str}<br>
+                    • Previous Week Total: {previous_week_total:.1f}<br>
+                    • Current Week So Far: {current_sum:.1f}<br>
+                    • Practices Done: {practices_done}<br>
+                    • Historical Practice Avgs: {practice_avgs.to_dict()}<br>
+                    • Projected Total: {projected_total if projection_used else 'N/A'}<br>
+                    • Final Used: {flag_val:.1f} ({label})<br>
+                    • Threshold (110%): {1.10*previous_week_total:.1f}<br>
+                    • ⚠️ Flag: {'YES' if flag else 'NO'}
+                </div>
+            """, unsafe_allow_html=True)
 
 # === ACWR DASHBOARD ===
 if st.session_state.page == "ACWR Dashboard":
