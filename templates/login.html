@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Player Readiness{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <div class="logo-container">
+                        <img src="{{ url_for('static', filename='BostonBoltsLogo.png') }}" alt="Boston Bolts" style="height: 60px; width: auto;">
+                        <div class="logo-divider"></div>
+                        <img src="{{ url_for('static', filename='MLSNextLogo.png') }}" alt="MLS Next" style="height: 60px; width: auto;">
+                    </div>
+                    <h3 class="fw-bold">Welcome Back</h3>
+                    <p class="text-muted">Sign in to your account</p>
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </button>
+                </form>
+
+                <div class="text-center">
+                    <p class="mb-0">Don't have an account? 
+                        <a href="{{ url_for('signup') }}" class="text-decoration-none">Sign up here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

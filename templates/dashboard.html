@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Player Readiness{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-2">
+                <i class="fas fa-tachometer-alt me-3"></i>
+                Player Readiness Dashboard
+            </h1>
+            <p class="mb-0">Welcome back, {{ user.player_name or user.username }}! Here's your performance overview.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="d-flex align-items-center justify-content-end">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='BostonBoltsLogo.png') }}" alt="Boston Bolts" style="height: 50px; width: auto;">
+                    <div class="logo-divider"></div>
+                    <img src="{{ url_for('static', filename='MLSNextLogo.png') }}" alt="MLS Next" style="height: 50px; width: auto;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading State -->
+<div id="loading-state" class="text-center py-5">
+    <div class="loading mb-3"></div>
+    <p class="text-white">Loading your performance data...</p>
+</div>
+
+<!-- Error State -->
+<div id="error-state" class="alert alert-danger" style="display: none;">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <span id="error-message"></span>
+</div>
+
+<!-- Main Dashboard Content -->
+<div id="dashboard-content" style="display: none;">
+    <!-- Player Info -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-user me-2"></i>Player Information
+                    </h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="mb-1"><strong>Name:</strong></p>
+                            <p class="mb-1"><strong>Team:</strong></p>
+                            <p class="mb-0"><strong>Last Updated:</strong></p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-1" id="player-name">-</p>
+                            <p class="mb-1" id="player-team">-</p>
+                            <p class="mb-0" id="last-updated">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-bar me-2"></i>Quick Stats
+                    </h5>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="total-distance">-</div>
+                            <div class="stat-label">Total Distance</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="top-speed">-</div>
+                            <div class="stat-label">Top Speed (kph)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Readiness Gauges -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">
+                <i class="fas fa-tachometer-alt me-2"></i>Player Readiness Gauges
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="row" id="readiness-gauges">
+                <!-- Gauges will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Charts & Rankings -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">
+                <i class="fas fa-chart-line me-2"></i>Technical Charts & Rankings
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <h6 class="text-center mb-3">
+                            <i class="fas fa-chart-area me-2"></i>Performance Trends
+                        </h6>
+                        <div id="technical-chart" style="height: 300px;">
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-chart-line fa-3x mb-3"></i>
+                                <p>Technical performance charts coming soon...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <h6 class="text-center mb-3">
+                            <i class="fas fa-trophy me-2"></i>Technical Rankings
+                        </h6>
+                        <div id="technical-rankings">
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-trophy fa-3x mb-3"></i>
+                                <p>Technical rankings coming soon...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Physical Charts & Rankings -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">
+                <i class="fas fa-dumbbell me-2"></i>Physical Charts & Rankings
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <h6 class="text-center mb-3">
+                            <i class="fas fa-chart-bar me-2"></i>Physical Metrics
+                        </h6>
+                        <div id="physical-chart" style="height: 300px;">
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-dumbbell fa-3x mb-3"></i>
+                                <p>Physical performance charts coming soon...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <h6 class="text-center mb-3">
+                            <i class="fas fa-medal me-2"></i>Physical Rankings
+                        </h6>
+                        <div id="physical-rankings">
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-medal fa-3x mb-3"></i>
+                                <p>Physical rankings coming soon...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadPlayerData();
+});
+
+function loadPlayerData() {
+    fetch('/api/player_data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showError(data.error);
+            } else {
+                displayDashboard(data);
+            }
+        })
+        .catch(error => {
+            showError('Failed to load player data: ' + error.message);
+        });
+}
+
+function showError(message) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').style.display = 'block';
+    document.getElementById('error-message').textContent = message;
+}
+
+function displayDashboard(data) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('dashboard-content').style.display = 'block';
+    
+    // Update player info
+    document.getElementById('player-name').textContent = data.player_name;
+    document.getElementById('player-team').textContent = data.team;
+    document.getElementById('last-updated').textContent = new Date().toLocaleDateString();
+    
+    // Update quick stats
+    if (data.latest_data) {
+        document.getElementById('total-distance').textContent = 
+            data.latest_data['Distance (m)'] ? Math.round(data.latest_data['Distance (m)']) + 'm' : 'N/A';
+        document.getElementById('top-speed').textContent = 
+            data.latest_data['Top Speed (kph)'] ? Math.round(data.latest_data['Top Speed (kph)']) + ' kph' : 'N/A';
+    }
+    
+    // Display readiness gauges
+    displayReadinessGauges(data.gauge_data);
+}
+
+function displayReadinessGauges(gaugeData) {
+    const container = document.getElementById('readiness-gauges');
+    const metrics = [
+        { key: 'Distance (m)', label: 'Total Distance', icon: 'fas fa-route' },
+        { key: 'High Intensity Running (m)', label: 'High Speed Running', icon: 'fas fa-running' },
+        { key: 'Sprint Distance (m)', label: 'Sprint Distance', icon: 'fas fa-bolt' },
+        { key: 'No. of Sprints', label: 'Number of Sprints', icon: 'fas fa-fire' },
+        { key: 'Top Speed (kph)', label: 'Top Speed', icon: 'fas fa-tachometer-alt' }
+    ];
+    
+    container.innerHTML = '';
+    
+    metrics.forEach(metric => {
+        const col = document.createElement('div');
+        col.className = 'col-md-4 col-lg-2 mb-3';
+        
+        if (gaugeData[metric.key]) {
+            col.innerHTML = `
+                <div class="metric-card text-center">
+                    <h6 class="mb-3">
+                        <i class="${metric.icon} me-2"></i>${metric.label}
+                    </h6>
+                    <div id="gauge-${metric.key.replace(/[^a-zA-Z0-9]/g, '')}"></div>
+                </div>
+            `;
+            container.appendChild(col);
+            
+            // Render the gauge
+            setTimeout(() => {
+                Plotly.newPlot(`gauge-${metric.key.replace(/[^a-zA-Z0-9]/g, '')}`, 
+                    JSON.parse(gaugeData[metric.key]).data, 
+                    JSON.parse(gaugeData[metric.key]).layout);
+            }, 100);
+        }
+    });
+}
+</script>
+{% endblock %} 

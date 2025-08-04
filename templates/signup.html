@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - Player Readiness{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <div class="logo-container">
+                        <img src="{{ url_for('static', filename='BostonBoltsLogo.png') }}" alt="Boston Bolts" style="height: 60px; width: auto;">
+                        <div class="logo-divider"></div>
+                        <img src="{{ url_for('static', filename='MLSNextLogo.png') }}" alt="MLS Next" style="height: 60px; width: auto;">
+                    </div>
+                    <h3 class="fw-bold">Create Your Account</h3>
+                    <p class="text-muted">Join the Player Readiness platform</p>
+                </div>
+
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="username" name="username" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="player_name" class="form-label">Player Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-id-card"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="player_name" name="player_name" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="team" class="form-label">Team</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-users"></i>
+                                    </span>
+                                    <select class="form-control" id="team" name="team" required>
+                                        <option value="">Select your team</option>
+                                        <option value="U15 MLS Next">U15 MLS Next</option>
+                                        <option value="U16 MLS Next">U16 MLS Next</option>
+                                        <option value="U17 MLS Next">U17 MLS Next</option>
+                                        <option value="U19 MLS Next">U19 MLS Next</option>
+                                        <option value="U15 MLS Next 2">U15 MLS Next 2</option>
+                                        <option value="U16 MLS Next 2">U16 MLS Next 2</option>
+                                        <option value="U17 MLS Next 2">U17 MLS Next 2</option>
+                                        <option value="U19 MLS Next 2">U19 MLS Next 2</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 mb-3">
+                        <i class="fas fa-user-plus me-2"></i>Create Account
+                    </button>
+                </form>
+
+                <div class="text-center">
+                    <p class="mb-0">Already have an account? 
+                        <a href="{{ url_for('login') }}" class="text-decoration-none">Sign in here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

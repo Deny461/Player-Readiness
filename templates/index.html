@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Player Readiness - Home{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center">
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='BostonBoltsLogo.png') }}" alt="Boston Bolts" style="height: 80px; width: auto;">
+        <div class="logo-divider"></div>
+        <img src="{{ url_for('static', filename='MLSNextLogo.png') }}" alt="MLS Next" style="height: 80px; width: auto;">
+    </div>
+    
+    <h1 class="display-3 fw-bold text-white mb-4">Player Readiness</h1>
+    <p class="lead text-white-50 mb-5">Track your performance metrics and optimize your training with advanced analytics</p>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-sign-in-alt fa-3x text-primary mb-3"></i>
+                    <h4 class="card-title">Already have an account?</h4>
+                    <p class="card-text">Sign in to access your personalized dashboard</p>
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-user-plus fa-3x text-success mb-3"></i>
+                    <h4 class="card-title">New player?</h4>
+                    <p class="card-text">Create your account and start tracking your progress</p>
+                    <a href="{{ url_for('signup') }}" class="btn btn-success btn-lg w-100">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-chart-line fa-2x text-primary mb-3"></i>
+                <h5 class="card-title">Performance Tracking</h5>
+                <p class="card-text">Monitor your distance, speed, and intensity metrics in real-time</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-tachometer-alt fa-2x text-warning mb-3"></i>
+                <h5 class="card-title">Readiness Gauges</h5>
+                <p class="card-text">Visual indicators showing your current performance levels</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-medal fa-2x text-success mb-3"></i>
+                <h5 class="card-title">Progress Analytics</h5>
+                <p class="card-text">Advanced charts and rankings for technical and physical metrics</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
