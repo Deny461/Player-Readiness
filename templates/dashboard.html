@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Player Readiness{% endblock %}
+{% block title %}Player Dashboard - Physical Testing{% endblock %}
 
 {% block content %}
 <div class="dashboard-header">
     <div class="row align-items-center">
         <div class="col-md-8">
             <h1 class="mb-2">
-                <i class="fas fa-tachometer-alt me-3"></i>
-                Player Readiness Dashboard
+                <i class="fas fa-dumbbell me-3"></i>
+                Physical Testing Dashboard
             </h1>
-            <p class="mb-0">Welcome back, {{ user.player_name or user.username }}! Here's your performance overview.</p>
+            <p class="mb-0">Welcome back, {{ user.player_name or user.username }}! Track your physical performance metrics.</p>
         </div>
         <div class="col-md-4 text-end">
             <div class="d-flex align-items-center justify-content-end">
@@ -27,7 +27,7 @@
 <!-- Loading State -->
 <div id="loading-state" class="text-center py-5">
     <div class="loading mb-3"></div>
-    <p class="text-white">Loading your performance data...</p>
+    <p class="text-white">Loading your physical testing data...</p>
 </div>
 
 <!-- Error State -->
@@ -66,16 +66,16 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">
-                        <i class="fas fa-chart-bar me-2"></i>Quick Stats
+                        <i class="fas fa-chart-line me-2"></i>Performance Summary
                     </h5>
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-value" id="total-distance">-</div>
-                            <div class="stat-label">Total Distance</div>
+                            <div class="stat-value" id="overall-progress">-</div>
+                            <div class="stat-label">Overall Progress</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-value" id="top-speed">-</div>
-                            <div class="stat-label">Top Speed (kph)</div>
+                            <div class="stat-value" id="tests-improved">-</div>
+                            <div class="stat-label">Tests Improved</div>
                         </div>
                     </div>
                 </div>
@@ -83,94 +83,44 @@
         </div>
     </div>
 
-    <!-- Player Readiness Gauges -->
+    <!-- Physical Testing Metrics -->
     <div class="card mb-4">
         <div class="card-header">
             <h4 class="mb-0">
-                <i class="fas fa-tachometer-alt me-2"></i>Player Readiness Gauges
+                <i class="fas fa-running me-2"></i>Physical Testing Metrics
             </h4>
         </div>
         <div class="card-body">
-            <div class="row" id="readiness-gauges">
-                <!-- Gauges will be populated by JavaScript -->
+            <div class="row" id="physical-metrics">
+                <!-- Metrics will be populated by JavaScript -->
             </div>
         </div>
     </div>
 
-    <!-- Technical Charts & Rankings -->
+    <!-- Physical Testing Charts -->
     <div class="card mb-4">
         <div class="card-header">
             <h4 class="mb-0">
-                <i class="fas fa-chart-line me-2"></i>Technical Charts & Rankings
+                <i class="fas fa-chart-bar me-2"></i>Performance Charts
             </h4>
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="metric-card">
-                        <h6 class="text-center mb-3">
-                            <i class="fas fa-chart-area me-2"></i>Performance Trends
-                        </h6>
-                        <div id="technical-chart" style="height: 300px;">
-                            <div class="text-center text-muted py-5">
-                                <i class="fas fa-chart-line fa-3x mb-3"></i>
-                                <p>Technical performance charts coming soon...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="metric-card">
-                        <h6 class="text-center mb-3">
-                            <i class="fas fa-trophy me-2"></i>Technical Rankings
-                        </h6>
-                        <div id="technical-rankings">
-                            <div class="text-center text-muted py-5">
-                                <i class="fas fa-trophy fa-3x mb-3"></i>
-                                <p>Technical rankings coming soon...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="row" id="physical-charts">
+                <!-- Charts will be populated by JavaScript -->
             </div>
         </div>
     </div>
 
-    <!-- Physical Charts & Rankings -->
+    <!-- Progress Tracking -->
     <div class="card mb-4">
         <div class="card-header">
             <h4 class="mb-0">
-                <i class="fas fa-dumbbell me-2"></i>Physical Charts & Rankings
+                <i class="fas fa-trending-up me-2"></i>Progress Tracking
             </h4>
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="metric-card">
-                        <h6 class="text-center mb-3">
-                            <i class="fas fa-chart-bar me-2"></i>Physical Metrics
-                        </h6>
-                        <div id="physical-chart" style="height: 300px;">
-                            <div class="text-center text-muted py-5">
-                                <i class="fas fa-dumbbell fa-3x mb-3"></i>
-                                <p>Physical performance charts coming soon...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="metric-card">
-                        <h6 class="text-center mb-3">
-                            <i class="fas fa-medal me-2"></i>Physical Rankings
-                        </h6>
-                        <div id="physical-rankings">
-                            <div class="text-center text-muted py-5">
-                                <i class="fas fa-medal fa-3x mb-3"></i>
-                                <p>Physical rankings coming soon...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="row" id="progress-charts">
+                <!-- Progress charts will be populated by JavaScript -->
             </div>
         </div>
     </div>
@@ -180,21 +130,21 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    loadPlayerData();
+    loadPhysicalData();
 });
 
-function loadPlayerData() {
-    fetch('/api/player_data')
+function loadPhysicalData() {
+    fetch('/api/physical_data')
         .then(response => response.json())
         .then(data => {
             if (data.error) {
                 showError(data.error);
             } else {
-                displayDashboard(data);
+                displayPhysicalDashboard(data);
             }
         })
         .catch(error => {
-            showError('Failed to load player data: ' + error.message);
+            showError('Failed to load physical data: ' + error.message);
         });
 }
 
@@ -204,61 +154,141 @@ function showError(message) {
     document.getElementById('error-message').textContent = message;
 }
 
-function displayDashboard(data) {
+function displayPhysicalDashboard(data) {
     document.getElementById('loading-state').style.display = 'none';
     document.getElementById('dashboard-content').style.display = 'block';
     
     // Update player info
-    document.getElementById('player-name').textContent = data.player_name;
-    document.getElementById('player-team').textContent = data.team;
+    document.getElementById('player-name').textContent = '{{ user.player_name or user.username }}';
+    document.getElementById('player-team').textContent = '{{ user.team or "Not assigned" }}';
     document.getElementById('last-updated').textContent = new Date().toLocaleDateString();
     
-    // Update quick stats
-    if (data.latest_data) {
-        document.getElementById('total-distance').textContent = 
-            data.latest_data['Distance (m)'] ? Math.round(data.latest_data['Distance (m)']) + 'm' : 'N/A';
-        document.getElementById('top-speed').textContent = 
-            data.latest_data['Top Speed (kph)'] ? Math.round(data.latest_data['Top Speed (kph)']) + ' kph' : 'N/A';
-    }
+    // Calculate overall progress
+    const physicalData = data.physical_data;
+    let improvedTests = 0;
+    let totalTests = Object.keys(physicalData).length;
     
-    // Display readiness gauges
-    displayReadinessGauges(data.gauge_data);
+    Object.values(physicalData).forEach(test => {
+        if (test.trend === 'up') improvedTests++;
+    });
+    
+    const overallProgress = Math.round((improvedTests / totalTests) * 100);
+    
+    document.getElementById('overall-progress').textContent = overallProgress + '%';
+    document.getElementById('tests-improved').textContent = improvedTests + '/' + totalTests;
+    
+    // Display physical metrics
+    displayPhysicalMetrics(physicalData);
+    
+    // Display charts
+    displayPhysicalCharts(data.charts);
+    
+    // Display progress charts
+    displayProgressCharts(data.progress_charts);
 }
 
-function displayReadinessGauges(gaugeData) {
-    const container = document.getElementById('readiness-gauges');
-    const metrics = [
-        { key: 'Distance (m)', label: 'Total Distance', icon: 'fas fa-route' },
-        { key: 'High Intensity Running (m)', label: 'High Speed Running', icon: 'fas fa-running' },
-        { key: 'Sprint Distance (m)', label: 'Sprint Distance', icon: 'fas fa-bolt' },
-        { key: 'No. of Sprints', label: 'Number of Sprints', icon: 'fas fa-fire' },
-        { key: 'Top Speed (kph)', label: 'Top Speed', icon: 'fas fa-tachometer-alt' }
-    ];
-    
+function displayPhysicalMetrics(physicalData) {
+    const container = document.getElementById('physical-metrics');
     container.innerHTML = '';
     
-    metrics.forEach(metric => {
-        const col = document.createElement('div');
-        col.className = 'col-md-4 col-lg-2 mb-3';
+    const testConfigs = {
+        'broad_jump': { icon: 'fas fa-long-arrow-alt-right', color: 'primary' },
+        'sprint_test': { icon: 'fas fa-running', color: 'success' },
+        'agility_test': { icon: 'fas fa-route', color: 'warning' },
+        'pull_ups': { icon: 'fas fa-dumbbell', color: 'info' },
+        'yoyo_ir_level': { icon: 'fas fa-heartbeat', color: 'danger' },
+        'vo2_max': { icon: 'fas fa-lungs', color: 'secondary' }
+    };
+    
+    Object.entries(physicalData).forEach(([testName, data]) => {
+        const config = testConfigs[testName] || { icon: 'fas fa-chart-line', color: 'primary' };
+        const trendIcon = data.trend === 'up' ? 'fas fa-arrow-up text-success' : 'fas fa-arrow-down text-danger';
         
-        if (gaugeData[metric.key]) {
-            col.innerHTML = `
-                <div class="metric-card text-center">
-                    <h6 class="mb-3">
-                        <i class="${metric.icon} me-2"></i>${metric.label}
-                    </h6>
-                    <div id="gauge-${metric.key.replace(/[^a-zA-Z0-9]/g, '')}"></div>
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-lg-4 mb-3';
+        
+        col.innerHTML = `
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="${config.icon} fa-2x text-${config.color}"></i>
+                    </div>
+                    <h6 class="card-title">${testName.replace('_', ' ').toUpperCase()}</h6>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted">Current</small>
+                            <div class="h5 mb-0">${data.current} ${data.unit}</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Target</small>
+                            <div class="h5 mb-0">${data.target} ${data.unit}</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Trend</small>
+                            <div class="h5 mb-0"><i class="${trendIcon}"></i></div>
+                        </div>
+                    </div>
                 </div>
-            `;
-            container.appendChild(col);
-            
-            // Render the gauge
-            setTimeout(() => {
-                Plotly.newPlot(`gauge-${metric.key.replace(/[^a-zA-Z0-9]/g, '')}`, 
-                    JSON.parse(gaugeData[metric.key]).data, 
-                    JSON.parse(gaugeData[metric.key]).layout);
-            }, 100);
-        }
+            </div>
+        `;
+        
+        container.appendChild(col);
+    });
+}
+
+function displayPhysicalCharts(charts) {
+    const container = document.getElementById('physical-charts');
+    container.innerHTML = '';
+    
+    Object.entries(charts).forEach(([testName, chartData]) => {
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-lg-4 mb-4';
+        
+        col.innerHTML = `
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-center">${testName.replace('_', ' ').toUpperCase()}</h6>
+                    <div id="chart-${testName}"></div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(col);
+        
+        // Render the chart
+        setTimeout(() => {
+            Plotly.newPlot(`chart-${testName}`, 
+                JSON.parse(chartData).data, 
+                JSON.parse(chartData).layout);
+        }, 100);
+    });
+}
+
+function displayProgressCharts(progressCharts) {
+    const container = document.getElementById('progress-charts');
+    container.innerHTML = '';
+    
+    Object.entries(progressCharts).forEach(([testName, chartData]) => {
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-lg-4 mb-4';
+        
+        col.innerHTML = `
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-center">${testName.replace('_', ' ').toUpperCase()} Progress</h6>
+                    <div id="progress-chart-${testName}"></div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(col);
+        
+        // Render the progress chart
+        setTimeout(() => {
+            Plotly.newPlot(`progress-chart-${testName}`, 
+                JSON.parse(chartData).data, 
+                JSON.parse(chartData).layout);
+        }, 100);
     });
 }
 </script>
